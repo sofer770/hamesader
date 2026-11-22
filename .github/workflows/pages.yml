@@ -1,8 +1,7 @@
-name: Website (GitHub Pages)
+name: Website (GitHub Pages, optional backup)
 
+# The app lives at el-habriut.co.il/hamesader. This backup copy runs only when started by hand.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

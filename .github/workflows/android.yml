@@ -42,6 +42,10 @@ jobs:
             ./gradlew assembleDebug --no-daemon
             cp app/build/outputs/apk/debug/app-debug.apk ../hamesader.apk
           fi
+      - name: Website package for el-habriut.co.il/hamesader
+        run: |
+          rm -rf dist && BASE_PATH=/hamesader/ npm run build
+          cd dist && zip -qr ../hamesader-website.zip . && cd ..
       - uses: actions/upload-artifact@v4
         with:
           name: hamesader-apk
@@ -52,5 +56,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest hamesader.apk --title "המסדר - גרסה לאנדרואיד" --notes "להורדה: לחצו על hamesader.apk, פתחו את הקובץ בטלפון ואשרו התקנה."
+          gh release create latest hamesader.apk hamesader-website.zip --title "המסדר - גרסה לאנדרואיד" --notes "אנדרואיד: hamesader.apk - פותחים בטלפון ומאשרים התקנה. אתר: hamesader-website.zip - מחלצים לתיקייה hamesader באתר el-habriut.co.il."
 
