@@ -11,7 +11,7 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
 
 export function Footer() {
   return (
-    <footer className="mt-14 mb-4 flex flex-col items-center gap-1 text-center text-[13px] leading-relaxed text-faint">
+    <footer className="mt-14 mb-4 flex flex-col items-center gap-0.5 text-center text-[15px] font-semibold leading-snug text-muted">
       <div className="mb-2 h-px w-16 bg-line" />
       <p>נוצר ע"י יאיר גלעדי</p>
       <p>המרכז לבריאות טבעית ©</p>
@@ -20,7 +20,7 @@ export function Footer() {
           href={`https://wa.me/972542135831?text=${encodeURIComponent("היי, אני רוצה לשאול שאלה")}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="ltr font-semibold text-[rgb(var(--done))] underline decoration-line underline-offset-4"
+          className="ltr font-bold text-[rgb(var(--done))] underline decoration-line underline-offset-4"
           title="שליחת הודעה בוואטסאפ"
         >
           054-2135831
