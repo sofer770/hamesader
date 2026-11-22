@@ -27,8 +27,21 @@ jobs:
       - run: npx cap sync android
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk hamesader.apk
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            export KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+            ./gradlew assembleRelease --no-daemon
+            cp app/build/outputs/apk/release/app-release.apk ../hamesader.apk
+          else
+            echo "::warning::No signing key in the repository secrets - building a debug APK (updates will not install over it)"
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../hamesader.apk
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: hamesader-apk
