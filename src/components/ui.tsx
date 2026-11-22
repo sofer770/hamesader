@@ -17,7 +17,7 @@ export function Footer() {
       <p>המרכז לבריאות טבעית ©</p>
       <p className="tabular">
         <a
-          href="https://wa.me/972542135831"
+          href={`https://wa.me/972542135831?text=${encodeURIComponent("היי, אני רוצה לשאול שאלה")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="ltr font-semibold text-[rgb(var(--done))] underline decoration-line underline-offset-4"
