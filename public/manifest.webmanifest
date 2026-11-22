@@ -38,6 +38,7 @@
     }
   },
   "id": "./",
+  "related_applications": [{ "platform": "webapp", "url": "https://el-habriut.co.il/hamesader/manifest.webmanifest" }],
   "scope": "./",
   "orientation": "portrait",
   "categories": [

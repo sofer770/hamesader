@@ -17,6 +17,25 @@ export function isStandalone(): boolean {
   }
 }
 
+const INSTALLED_KEY = 'hamesader.installed';
+/** Remembered on this phone once the app was installed, so the browser stops offering to install it again. */
+let installedHere = (() => {
+  try {
+    return localStorage.getItem(INSTALLED_KEY) === '1';
+  } catch {
+    return false;
+  }
+})();
+function markInstalled() {
+  installedHere = true;
+  try {
+    localStorage.setItem(INSTALLED_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+  notify();
+}
+
 export const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 /** Inside a native wrapper (Capacitor) or an embedded preview we skip the web-install flow. */
@@ -30,6 +49,19 @@ const isEmbedded = () => {
 
 export function initPwa() {
   if (isEmbedded()) return;
+  if (isStandalone()) markInstalled();
+  // Chrome on Android can tell us the app is already installed on this phone
+  try {
+    const nav = navigator as unknown as { getInstalledRelatedApps?: () => Promise<unknown[]> };
+    nav
+      .getInstalledRelatedApps?.()
+      .then((apps) => {
+        if (apps.length) markInstalled();
+      })
+      .catch(() => {});
+  } catch {
+    /* ignore */
+  }
   try {
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
       window.addEventListener('load', () => navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {}));
@@ -44,19 +76,20 @@ export function initPwa() {
   });
   window.addEventListener('appinstalled', () => {
     deferred = null;
-    notify();
+    markInstalled();
   });
 }
 
 export const canPromptInstall = () => !!deferred;
-export const canShowInstallHelp = () => !isEmbedded() && !isStandalone();
+export const canShowInstallHelp = () => !isEmbedded() && !isStandalone() && !installedHere;
 
 export async function promptInstall(): Promise<boolean> {
   if (!deferred) return false;
   await deferred.prompt();
   const { outcome } = await deferred.userChoice;
   deferred = null;
-  notify();
+  if (outcome === 'accepted') markInstalled();
+  else notify();
   return outcome === 'accepted';
 }
 
