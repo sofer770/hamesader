@@ -9,7 +9,7 @@ rm -rf dist-app
 npx tsc --noEmit
 npx vite build --outDir dist-app --emptyOutDir
 # server-only files never go into the phone bundle
-rm -rf dist-app/api dist-app/app dist-app/admin.php dist-app/sw.js
+rm -rf dist-app/api dist-app/app dist-app/apk dist-app/admin.php dist-app/sw.js dist-app/.htaccess
 
 # 2. The website itself (served from /hamesader/)
 rm -rf dist
