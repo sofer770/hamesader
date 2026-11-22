@@ -44,7 +44,7 @@ jobs:
           fi
       - name: Website package for el-habriut.co.il/hamesader
         run: |
-          rm -rf dist && BASE_PATH=/hamesader/ npm run build
+          bash scripts/build-website.sh
           cd dist && zip -qr ../hamesader-website.zip . && cd ..
       - uses: actions/upload-artifact@v4
         with:

@@ -6,6 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   android: { backgroundColor: '#FBF8F3' },
   plugins: {
+    // Self-hosted updates from el-habriut.co.il/hamesader/app (no external update service, no stats sent)
+    CapacitorUpdater: { autoUpdate: false, statsUrl: '', appReadyTimeout: 15000 },
     LocalNotifications: { smallIcon: 'ic_stat_notify', iconColor: '#3B2E8A', sound: 'reminder.wav' },
   },
 };

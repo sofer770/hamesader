@@ -4,3 +4,4 @@ dist-single
 .env.local
 public/api/data/admin.json
 public/api/data/*.csv
+dist-app

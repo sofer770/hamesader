@@ -6,6 +6,8 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 export default defineConfig(({ mode }) => ({
   // Served from a sub-folder on GitHub Pages (/hamesader/); "/" everywhere else, including the Android app
   base: process.env.BASE_PATH || '/',
+  // Same id in the website and the phone bundle built together, so the Android app knows when it is up to date
+  define: { __BUILD_ID__: JSON.stringify(process.env.BUILD_ID || new Date().toISOString().replace(/\D/g, '').slice(0, 14)) },
   plugins: [react(), ...(mode === 'single' ? [viteSingleFile()] : [])],
   build: {
     outDir: mode === 'single' ? 'dist-single' : 'dist',
