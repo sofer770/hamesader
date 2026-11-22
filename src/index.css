@@ -16,6 +16,7 @@
   --brand-soft: 236 233 250;
   --brand-ink: 255 255 255;
   --done: 38 132 82;
+  --link: 26 95 210;
   --done-soft: 224 243 231;
   --warn: 196 120 10;
   --warn-soft: 253 241 214;
@@ -38,7 +39,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: 19 17 28; --surface: 29 26 42; --sunken: 37 34 53; --ink: 240 237 248; --muted: 170 164 188; --faint: 112 106 132;
-    --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44;
+    --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44; --link: 110 168 255;
     --warn: 242 184 86; --warn-soft: 66 50 20; --danger: 242 114 114; --danger-soft: 70 30 34; --shadow: 0 0 0; --hero: 50 42 112; --hero-ink: 244 241 255;
     --c-recipes-bg: 64 38 24;   --c-recipes-ink: 255 178 130;
     --c-shopping-bg: 22 56 44;  --c-shopping-ink: 120 220 176;
@@ -52,7 +53,7 @@
 }
 :root[data-theme='dark'] {
   --bg: 19 17 28; --surface: 29 26 42; --sunken: 37 34 53; --ink: 240 237 248; --muted: 170 164 188; --faint: 112 106 132;
-  --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44;
+  --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44; --link: 110 168 255;
   --warn: 242 184 86; --warn-soft: 66 50 20; --danger: 242 114 114; --danger-soft: 70 30 34; --shadow: 0 0 0; --hero: 50 42 112; --hero-ink: 244 241 255;
   --c-recipes-bg: 64 38 24;   --c-recipes-ink: 255 178 130;
   --c-shopping-bg: 22 56 44;  --c-shopping-ink: 120 220 176;
@@ -134,4 +135,10 @@ mark.hl {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-14deg); }
+  75% { transform: rotate(14deg); }
 }

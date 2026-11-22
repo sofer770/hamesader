@@ -5,6 +5,8 @@ import { useStore } from '../state/store';
 import { useNav } from '../state/nav';
 import { CATEGORY_BY_ID } from '../lib/categories';
 import { formatDue, formatFullDate, toISODate } from '../lib/dates';
+import { formatReminder } from '../lib/reminders';
+import { ReminderSheet } from '../components/ReminderSheet';
 import { parseListItems } from '../services/classifier/ruleBased';
 import { uid } from '../services/storage';
 import { LinkCard } from '../components/LinkCard';
@@ -29,28 +31,6 @@ function Block({ title, icon, children, action }: { title: string; icon?: ReactN
   );
 }
 
-const REMINDERS = [
-  { value: 'none', label: 'בלי תזכורת' },
-  { value: 'at', label: 'בזמן היעד' },
-  { value: 'hour', label: 'שעה לפני' },
-  { value: 'morning', label: 'בבוקר של אותו יום (08:00)' },
-  { value: 'evening', label: 'ערב לפני (20:00)' },
-] as const;
-
-function reminderFrom(kind: string, dueDate?: string, dueTime?: string): string | undefined {
-  if (kind === 'none' || !dueDate) return undefined;
-  const [y, m, d] = dueDate.split('-').map(Number);
-  const [hh, mm] = (dueTime ?? '09:00').split(':').map(Number);
-  const at = new Date(y, m - 1, d, hh, mm);
-  if (kind === 'hour') at.setHours(at.getHours() - 1);
-  if (kind === 'morning') at.setHours(8, 0, 0, 0);
-  if (kind === 'evening') {
-    at.setDate(at.getDate() - 1);
-    at.setHours(20, 0, 0, 0);
-  }
-  return at.toISOString();
-}
-
 export function ItemDetailScreen({ id }: { id: string }) {
   const store = useStore();
   const nav = useNav();
@@ -61,7 +41,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
   const [title, setTitle] = useState(item?.title ?? '');
   const [raw, setRaw] = useState(item?.rawText ?? '');
   const [notes, setNotes] = useState(item?.notes ?? '');
-  const [reminderKind, setReminderKind] = useState<string>('none');
+  const [reminderOpen, setReminderOpen] = useState(false);
 
   useEffect(() => {
     if (!item) return;
@@ -142,6 +122,9 @@ export function ItemDetailScreen({ id }: { id: string }) {
             <IconButton label={item.favorite ? 'הסר ממועדפים' : 'הוסף למועדפים'} active={item.favorite} onClick={() => store.toggleFavorite(item.id)}>
               <Star size={20} fill={item.favorite ? 'currentColor' : 'none'} />
             </IconButton>
+            <IconButton label="תזכורת" active={!!item.reminderAt && !item.reminderFired} onClick={() => setReminderOpen(true)}>
+              <Bell size={20} fill={item.reminderAt && !item.reminderFired ? 'currentColor' : 'none'} />
+            </IconButton>
             <IconButton label="שיתוף" onClick={share}>
               <Share2 size={20} />
             </IconButton>
@@ -211,6 +194,25 @@ export function ItemDetailScreen({ id }: { id: string }) {
         {item.link && <LinkCard link={item.link} />}
         {item.image && <img src={item.image} alt={item.title} className="max-h-[420px] w-full rounded-3xl border border-line object-contain" />}
 
+        {/* Reminder - available for every item */}
+        <button
+          onClick={() => setReminderOpen(true)}
+          className={`pressable flex items-center gap-3 rounded-3xl border p-4 text-start ${item.reminderAt && !item.reminderFired ? 'border-brand/30 bg-brand-soft' : 'border-line/70 bg-surface shadow-soft'}`}
+        >
+          <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${item.reminderAt && !item.reminderFired ? 'bg-brand text-brand-ink' : 'bg-sunken text-brand'}`}>
+            <Bell size={20} />
+          </span>
+          <span className="flex-1">
+            <span className="block font-display text-[16px] font-semibold">
+              {item.reminderAt && !item.reminderFired ? `תזכורת ${formatReminder(item.reminderAt)}` : 'הוספת תזכורת'}
+            </span>
+            <span className="block text-[13px] text-muted">
+              {item.reminderAt && !item.reminderFired ? 'לחצו כדי לשנות או לבטל' : 'צלצול ותזכורת בזמן שתבחרו'}
+            </span>
+          </span>
+        </button>
+        <ReminderSheet item={item} open={reminderOpen} onClose={() => setReminderOpen(false)} />
+
         {/* Task */}
         {task && (
           <Block title="פרטי המשימה" icon={<CalendarDays size={16} />}>
@@ -252,49 +254,12 @@ export function ItemDetailScreen({ id }: { id: string }) {
                 );
               })}
               {task.dueDate && (
-                <button onClick={() => up((i) => ({ task: { ...i.task!, dueDate: undefined, dueTime: undefined, reminderAt: undefined } }))} className="rounded-full px-3 py-1 text-[13px] font-semibold text-muted hover:text-danger">
+                <button onClick={() => up((i) => ({ task: { ...i.task!, dueDate: undefined, dueTime: undefined, } }))} className="rounded-full px-3 py-1 text-[13px] font-semibold text-muted hover:text-danger">
                   בלי תאריך
                 </button>
               )}
             </div>
 
-            <label className="mt-4 flex flex-col gap-1 text-[13px] font-semibold text-muted">
-              <span className="flex items-center gap-1.5">
-                <Bell size={14} /> תזכורת
-              </span>
-              <select
-                id="reminder"
-                value={task.reminderAt ? 'set' : reminderKind}
-                disabled={!task.dueDate}
-                onChange={(e) => {
-                  const k = e.target.value;
-                  setReminderKind(k);
-                  const at = reminderFrom(k, task.dueDate, task.dueTime);
-                  up((i) => ({ task: { ...i.task!, reminderAt: at, reminderFired: false } }));
-                  if (at) {
-                    try {
-                      if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
-                    } catch {
-                      /* ignore */
-                    }
-                    store.showToast({ text: 'נזכיר לך בזמן', emoji: '⏰' });
-                  }
-                }}
-                className="h-11 rounded-xl border border-line bg-bg px-3 text-[16px] text-ink outline-none focus:border-brand/60 disabled:opacity-50"
-              >
-                {task.reminderAt && (
-                  <option value="set">
-                    {new Date(task.reminderAt).toLocaleString('he-IL', { weekday: 'long', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'numeric' })}
-                  </option>
-                )}
-                {REMINDERS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-              {!task.dueDate && <span className="font-normal text-faint">כדי להגדיר תזכורת צריך תאריך יעד</span>}
-            </label>
 
             <div className="mt-4">
               <div className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-muted">

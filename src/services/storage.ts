@@ -16,6 +16,7 @@ export interface Settings {
   seeded: boolean;
   recentSearches: string[];
   customTags: string[];
+  reminderSound: 'bell' | 'beep' | 'chime' | 'none';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   seeded: false,
   recentSearches: [],
   customTags: [],
+  reminderSound: 'bell',
 };
 
 const KEY_ITEMS = 'hamesader.items.v1';

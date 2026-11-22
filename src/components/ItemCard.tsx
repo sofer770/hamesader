@@ -1,3 +1,4 @@
+import { formatReminder } from '../lib/reminders';
 import { Bell, Check, Image as ImageIcon, Link2, Star } from 'lucide-react';
 import type { Item } from '../lib/types';
 import { CATEGORY_BY_ID, toneBg } from '../lib/categories';
@@ -95,7 +96,12 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
               {item.task.dueTime && <span className="tabular">{item.task.dueTime}</span>}
             </span>
           )}
-          {item.task?.reminderAt && !done && <Bell size={13} className="text-brand" aria-label="יש תזכורת" />}
+          {item.reminderAt && !item.reminderFired && !done && (
+            <span className="inline-flex items-center gap-1 font-semibold text-brand" aria-label="יש תזכורת">
+              <Bell size={13} fill="currentColor" />
+              {formatReminder(item.reminderAt)}
+            </span>
+          )}
           {total > 0 && (
             <span className="inline-flex items-center gap-1.5">
               <span className="relative h-1.5 w-12 overflow-hidden rounded-full bg-sunken">

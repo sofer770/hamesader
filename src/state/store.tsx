@@ -63,7 +63,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => settingsStore.load());
   const [items, dispatch] = useReducer(reducer, undefined, () => {
     const saved = localRepository.load();
-    if (saved && settingsStore.load().seeded) return saved;
+    if (saved && settingsStore.load().seeded)
+      return saved.map((i) =>
+        i.task?.reminderAt && !i.reminderAt
+          ? { ...i, reminderAt: i.task.reminderAt, reminderFired: i.task.reminderFired, task: { ...i.task, reminderAt: undefined, reminderFired: undefined } }
+          : i,
+      );
     return buildDemoItems();
   });
   const [toast, setToast] = useState<Toast | null>(null);
@@ -130,6 +135,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         checklist: listItems.length >= 2 ? listItems.map((text): ChecklistEntry => ({ id: uid(), text, checked: false })) : undefined,
         image: extra?.image,
       };
+      // "תזכיר לי מחר ב-9..." -> set the reminder automatically
+      if (/תזכ(י|ו)ר|להזכיר/.test(raw) && r.dueDate) {
+        const at = new Date(`${r.dueDate}T${r.dueTime ?? '09:00'}`);
+        if (at.getTime() > Date.now()) {
+          item.reminderAt = at.toISOString();
+          item.reminderFired = false;
+        }
+      }
       dispatch({ type: 'add', item });
       return item;
     },

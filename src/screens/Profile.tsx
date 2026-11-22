@@ -5,6 +5,7 @@ import { initials } from '../lib/initials';
 import { useNav } from '../state/nav';
 import { classifier } from '../services/classifier';
 import { InstallCard } from '../components/InstallCard';
+import { playReminderSound, REMINDER_SOUNDS, unlockAudio } from '../lib/reminders';
 import { Footer, Logo, ScreenHeader, Segmented, TagChip } from '../components/ui';
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
@@ -73,6 +74,27 @@ export function ProfileScreen() {
               שמירה
             </button>
           </form>
+        </Card>
+
+        <Card title="צליל התזכורות">
+          <div className="grid grid-cols-4 gap-2">
+            {REMINDER_SOUNDS.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => {
+                  unlockAudio();
+                  updateSettings({ reminderSound: s.value });
+                  playReminderSound(s.value, 1);
+                }}
+                aria-pressed={settings.reminderSound === s.value}
+                className={`pressable flex flex-col items-center gap-1 rounded-2xl border py-3 text-[14px] font-semibold ${settings.reminderSound === s.value ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-bg text-muted'}`}
+              >
+                <span className="text-xl" aria-hidden>{s.emoji}</span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[13px] text-muted">לוחצים על צליל כדי לשמוע אותו. הצליל נשמע כשמגיע זמן התזכורת, יחד עם רטט.</p>
         </Card>
 
         <Card title="מראה">

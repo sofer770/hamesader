@@ -165,9 +165,9 @@ export function buildDemoItems(now = new Date()): Item[] {
     const isTask = category === 'tasks';
     const listItems = s.list ? r.listItems : [];
     let task: TaskInfo | undefined;
+    let reminderAt: string | undefined;
     if (isTask) {
       const t = s.task ?? {};
-      let reminderAt: string | undefined;
       if (t.reminderAt === 'today17') {
         const d = new Date(now);
         d.setHours(17, 0, 0, 0);
@@ -178,7 +178,6 @@ export function buildDemoItems(now = new Date()): Item[] {
         doneAt: t.doneAt ? addDays(now, -Number(t.doneAt.replace(/\D/g, ''))).toISOString() : undefined,
         dueDate: t.dueIn !== undefined ? toISODate(addDays(now, t.dueIn)) : r.dueDate,
         dueTime: t.dueTime ?? r.dueTime,
-        reminderAt,
         priority: t.priority ?? 'medium',
       };
     }
@@ -200,6 +199,8 @@ export function buildDemoItems(now = new Date()): Item[] {
       reviewed: s.reviewed ?? true,
       confidence: s.confidence ?? r.confidence,
       task,
+      reminderAt,
+      reminderFired: reminderAt ? new Date(reminderAt).getTime() <= now.getTime() : undefined,
       checklist: listItems.length ? listItems.map((text) => ({ id: uid(), text, checked: s.checked?.includes(text) ?? false })) : undefined,
     } satisfies Item;
   });

@@ -1,3 +1,4 @@
+import { formatReminder, isReminderPending } from '../lib/reminders';
 import { useMemo, useState } from 'react';
 import { ChevronLeft, Search } from 'lucide-react';
 import { useStore } from '../state/store';
@@ -49,6 +50,7 @@ export function HomeScreen() {
   const openTasks = items.filter((i) => i.task && !i.task.done).length;
   const todayCount = pending.filter((i) => daysBetween(now, fromISODate(i.task!.dueDate!)) <= 0).length;
   const inbox = items.filter((i) => !i.reviewed);
+  const reminders = items.filter(isReminderPending).sort((a, b) => +new Date(a.reminderAt!) - +new Date(b.reminderAt!));
   const favorites = items.filter((i) => i.favorite);
   const recent = [...(recentMode === 'recent' ? items : favorites)].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 6);
 
@@ -136,6 +138,25 @@ export function HomeScreen() {
           </span>
           <ChevronLeft size={20} className="text-brand" />
         </button>
+      )}
+
+      {/* Upcoming reminders */}
+      {reminders.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-line/70 bg-surface p-3.5 shadow-soft">
+          <div className="mb-2 flex items-center gap-2 font-semibold">
+            <span aria-hidden>⏰</span> תזכורות קרובות
+          </div>
+          <ul className="flex flex-col">
+            {reminders.slice(0, 3).map((r) => (
+              <li key={r.id}>
+                <button onClick={() => nav.go({ name: 'item', id: r.id })} className="flex w-full items-center gap-3 rounded-xl px-1 py-2 text-start hover:bg-sunken">
+                  <span className="tabular shrink-0 rounded-lg bg-brand-soft px-2 py-1 text-[13px] font-semibold text-brand">{formatReminder(r.reminderAt!)}</span>
+                  <span className="min-w-0 flex-1 truncate text-[15px]">{r.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {/* Categories */}

@@ -22,7 +22,7 @@ export interface TaskInfo {
   dueDate?: string;
   /** HH:mm */
   dueTime?: string;
-  /** ISO date-time */
+  /** @deprecated moved to Item.reminderAt - kept only to migrate old saved data */
   reminderAt?: string;
   reminderFired?: boolean;
   priority: Priority;
@@ -53,6 +53,9 @@ export interface Item {
   confidence: number;
   task?: TaskInfo;
   checklist?: ChecklistEntry[];
+  /** ISO date-time of a reminder (any item can have one) */
+  reminderAt?: string;
+  reminderFired?: boolean;
   /** Downscaled data URL of an uploaded image / screenshot */
   image?: string;
 }

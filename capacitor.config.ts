@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'המסדר',
   webDir: 'dist',
   android: { backgroundColor: '#FBF8F3' },
+  plugins: {
+    LocalNotifications: { smallIcon: 'ic_stat_notify', iconColor: '#3B2E8A', sound: 'reminder.wav' },
+  },
 };
 
 export default config;

@@ -26,7 +26,7 @@ export function Footer() {
           054-2135831
         </a>
         {' - '}
-        <a href="https://el-habriut.co.il" target="_blank" rel="noopener noreferrer" className="underline decoration-line underline-offset-4 hover:text-brand">
+        <a href="https://el-habriut.co.il" target="_blank" rel="noopener noreferrer" className="ltr font-bold text-[rgb(var(--link))] underline underline-offset-4">
           https://el-habriut.co.il
         </a>
       </p>

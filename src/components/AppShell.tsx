@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { isNative, isReminderPending, onNativeReminderTap, playReminderSound, showWebNotification, syncNativeReminders, unlockAudio, vibrate } from '../lib/reminders';
 import { Home, LayoutGrid, Plus, Search, UserRound } from 'lucide-react';
 import { useNav, type Tab } from '../state/nav';
 import { useStore } from '../state/store';
@@ -13,25 +14,120 @@ const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
 ];
 
 function useReminders() {
-  const { items, update, showToast } = useStore();
+  const { items, update, settings } = useStore();
   const nav = useNav();
+  const [ringing, setRinging] = useState<string | null>(null);
+
+  // Ring for any reminder whose time has come (checked every 10 seconds while the app is open)
   useEffect(() => {
     const check = () => {
       const now = Date.now();
-      const due = items.find((i) => i.task && !i.task.done && i.task.reminderAt && !i.task.reminderFired && new Date(i.task.reminderAt).getTime() <= now);
+      const due = items.find((i) => isReminderPending(i) && new Date(i.reminderAt!).getTime() <= now);
       if (!due) return;
-      update(due.id, (i) => ({ task: i.task ? { ...i.task, reminderFired: true } : i.task }));
-      showToast({ text: `תזכורת: ${due.title}`, emoji: '⏰', action: { label: 'פתח', run: () => nav.go({ name: 'item', id: due.id }) } });
-      try {
-        if ('Notification' in window && Notification.permission === 'granted') new Notification('המסדר', { body: due.title, icon: import.meta.env.BASE_URL + 'icons/icon-192.png' });
-      } catch {
-        /* notifications unavailable */
+      update(due.id, { reminderFired: true });
+      setRinging(due.id);
+      // In the Android app the phone's own notification already rang; elsewhere we ring here.
+      if (!isNative()) {
+        playReminderSound(settings.reminderSound, 3);
+        showWebNotification(due.title);
       }
+      vibrate();
     };
     check();
-    const t = window.setInterval(check, 30_000);
-    return () => window.clearInterval(t);
-  }, [items, update, showToast, nav]);
+    const t = window.setInterval(check, 10_000);
+    const onVisible = () => document.visibilityState === 'visible' && check();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [items, update, settings.reminderSound]);
+
+  // Android app: keep the phone's alarm schedule in sync with the reminders
+  const sig = items
+    .filter(isReminderPending)
+    .map((i) => `${i.id}@${i.reminderAt}:${i.title}`)
+    .join('|');
+  useEffect(() => {
+    syncNativeReminders(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig]);
+
+  useEffect(() => {
+    let off = () => {};
+    onNativeReminderTap((id) => nav.go({ name: 'item', id })).then((f) => (off = f));
+    return () => off();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Browsers only allow sound after a first tap
+  useEffect(() => {
+    const u = () => unlockAudio();
+    window.addEventListener('pointerdown', u, { once: true });
+    return () => window.removeEventListener('pointerdown', u);
+  }, []);
+
+  return { ringing, stop: () => setRinging(null) };
+}
+
+function ReminderAlert({ id, onClose }: { id: string; onClose: () => void }) {
+  const { items, update, toggleTask, showToast } = useStore();
+  const nav = useNav();
+  const item = items.find((i) => i.id === id);
+  if (!item) return null;
+  const snooze = (min: number) => {
+    update(item.id, { reminderAt: new Date(Date.now() + min * 60_000).toISOString(), reminderFired: false });
+    showToast({ text: `נזכיר שוב בעוד ${min} דקות`, emoji: '😴' });
+    onClose();
+  };
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 backdrop-blur-sm sm:items-center" role="alertdialog" aria-labelledby="rem-title">
+      <div className="w-full max-w-sm animate-pop-in rounded-[28px] bg-surface p-5 text-center shadow-lift">
+        <div className="mx-auto mb-2 grid h-16 w-16 animate-[wiggle_0.5s_ease-in-out_3] place-items-center rounded-full bg-brand-soft text-4xl" aria-hidden>
+          ⏰
+        </div>
+        <div className="text-[13px] font-semibold text-brand">תזכורת</div>
+        <h2 id="rem-title" className="mt-1 font-display text-[20px] font-bold leading-snug">
+          {item.title}
+        </h2>
+        <div className="mt-4 grid gap-2">
+          {item.task && !item.task.done ? (
+            <button
+              onClick={() => {
+                toggleTask(item.id);
+                showToast({ text: 'כל הכבוד! המשימה סומנה כבוצעה', emoji: '✅' });
+                onClose();
+              }}
+              className="pressable h-12 rounded-2xl bg-[rgb(var(--done))] font-display text-[16px] font-semibold text-white"
+            >
+              ✓ סיימתי
+            </button>
+          ) : (
+            <button onClick={onClose} className="pressable h-12 rounded-2xl bg-brand font-display text-[16px] font-semibold text-brand-ink">
+              הבנתי
+            </button>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => snooze(10)} className="pressable h-11 rounded-2xl bg-sunken text-[15px] font-semibold">
+              😴 עוד 10 דקות
+            </button>
+            <button onClick={() => snooze(60)} className="pressable h-11 rounded-2xl bg-sunken text-[15px] font-semibold">
+              😴 עוד שעה
+            </button>
+          </div>
+          <button
+            onClick={() => {
+              onClose();
+              nav.go({ name: 'item', id: item.id });
+            }}
+            className="mt-1 text-[14px] font-semibold text-brand hover:underline"
+          >
+            פתיחת הפריט
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /** Content shared from another app via the PWA share target (?title=&text=&url=) */
@@ -90,7 +186,7 @@ function ToastView() {
 export function AppShell({ children }: { children: ReactNode }) {
   const nav = useNav();
   const { items } = useStore();
-  useReminders();
+  const reminder = useReminders();
   useShareTarget();
   const inboxCount = items.filter((i) => !i.reviewed).length;
 
@@ -164,6 +260,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <Composer />
       <ToastView />
+      {reminder.ringing && <ReminderAlert id={reminder.ringing} onClose={reminder.stop} />}
     </div>
   );
 }
