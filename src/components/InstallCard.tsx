@@ -4,7 +4,8 @@ import { canPromptInstall, canShowInstallHelp, isIOS, isStandalone, onInstallCha
 import { useStore } from '../state/store';
 import { Logo, Sheet } from './ui';
 
-export const APK_URL = 'https://github.com/sofer770/hamesader/releases/download/latest/hamesader.apk';
+// Served from the site itself (fast in Israel); GitHub keeps a backup copy at releases/latest
+export const APK_URL = `${((import.meta.env.VITE_SITE_URL as string | undefined) ?? 'https://el-habriut.co.il/hamesader').replace(/\/$/, '')}/app/hamesader.apk`;
 const KEY = 'hamesader.installDismissed';
 
 const isAndroid = () => /android/i.test(navigator.userAgent);

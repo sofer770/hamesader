@@ -1,6 +1,7 @@
 # המסדר - so phones recognise it as a real installable app
 AddType application/manifest+json .webmanifest
 AddType application/javascript .js
+AddType application/vnd.android.package-archive .apk
 
 <IfModule mod_headers.c>
   # Always check for a new version of the app shell

@@ -17,4 +17,11 @@ BASE_PATH=/hamesader/ npx vite build
 mkdir -p dist/app
 (cd dist-app && zip -qr ../dist/app/bundle.zip .)
 printf '{"version":"%s"}\n' "$BUILD_ID" > dist/app/version.json
+
+# 3. The Android app file, downloaded from the site (faster than GitHub for people in Israel)
+if [ -f hamesader.apk ]; then
+  cp hamesader.apk dist/app/hamesader.apk
+else
+  curl -fsSL -o dist/app/hamesader.apk https://github.com/sofer770/hamesader/releases/download/latest/hamesader.apk || echo "warning: APK not added"
+fi
 echo "website built, app version $BUILD_ID"
