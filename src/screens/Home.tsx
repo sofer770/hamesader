@@ -7,7 +7,7 @@ import { useNav } from '../state/nav';
 import { CATEGORIES, toneBg, toneInk } from '../lib/categories';
 import { daysBetween, fromISODate } from '../lib/dates';
 import { ItemList } from '../components/ItemCard';
-import { InstallCard } from '../components/InstallCard';
+import { InstallButton, InstallCard } from '../components/InstallCard';
 import { EmptyState, Footer, LinkButton, Logo, SectionTitle, Segmented } from '../components/ui';
 import type { ContentType } from '../lib/types';
 
@@ -73,6 +73,7 @@ export function HomeScreen() {
                 : 'בואו נתחיל לסדר'}
           </p>
         </div>
+        <InstallButton />
         <button
           onClick={() => nav.switchTab('profile')}
           aria-label="פרופיל"
@@ -90,6 +91,10 @@ export function HomeScreen() {
         <Search size={20} className="text-muted" />
         <span className="truncate">חפשו כל דבר... "המתכון לעוגת שוקולד"</span>
       </button>
+
+      <div className="mt-3">
+        <InstallCard dismissible />
+      </div>
 
       {/* Quick add */}
       <div className="mt-3 rounded-3xl bg-hero p-4 text-hero-ink shadow-fab">
@@ -132,10 +137,6 @@ export function HomeScreen() {
           <ChevronLeft size={20} className="text-brand" />
         </button>
       )}
-
-      <div className="mt-4">
-        <InstallCard dismissible />
-      </div>
 
       {/* Categories */}
       <SectionTitle action={<LinkButton onClick={() => nav.switchTab('categories')}>הכל</LinkButton>}>הקטגוריות שלך</SectionTitle>
