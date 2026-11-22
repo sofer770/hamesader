@@ -29,25 +29,24 @@ const SEEDS: Seed[] = [
     tags: ['בית'],
   },
   {
-    text: 'מתכון ללזניה בשרית לסוף השבוע https://www.foody.co.il/foody_recipe/lasagna-bolognese',
+    text: 'מתכון ללזניה ירקות עם תרד ועדשים לסוף השבוע https://www.foody.co.il/foody_recipe/vegetable-lentil-lasagna',
     ago: 3 * H,
     reviewed: false,
     favorite: true,
     tags: ['משפחה'],
-    title: 'לזניה בשרית לסוף השבוע',
+    title: 'לזניה ירקות עם תרד ועדשים',
     link: {
-      url: 'https://www.foody.co.il/foody_recipe/lasagna-bolognese',
+      url: 'https://www.foody.co.il/foody_recipe/vegetable-lentil-lasagna',
       domain: 'foody.co.il',
       siteName: 'Foody',
-      title: 'לזניה בולונז ביתית ועסיסית',
-      description: 'שכבות של רגו בשר, רוטב בשמל קטיפתי ופרמזן. מספיק ל-8 סועדים, אפשר להכין יום מראש.',
+      title: 'לזניה ירקות ביתית עם תרד ועדשים',
+      description: 'שכבות של רוטב עגבניות ועדשים, תרד טרי, חצילים קלויים ועשבי תיבול. מספיק ל-8 סועדים, אפשר להכין יום מראש.',
       cover: 'food',
     },
   },
-  { text: 'לקבוע פגישה עם רואה החשבון לגבי הדוח השנתי', ago: 2 * H, task: { dueIn: 1, priority: 'high', dueTime: '10:00' }, tags: ['עסק', 'עבודה'] },
   {
     text: 'לקבוע תור לרופא שיניים לילדים',
-    ago: 6 * H,
+    ago: 2 * D + 6 * H,
     task: { dueIn: 0, priority: 'medium', reminderAt: 'today17' },
     tags: ['משפחה', 'בריאות'],
   },
@@ -110,7 +109,6 @@ const SEEDS: Seed[] = [
     category: 'ideas',
     title: 'רעיונות לחופשה באיטליה',
   },
-  { text: 'להחזיר את הספר לספרייה העירונית', ago: 4 * D, task: { dueIn: -1, priority: 'low' } },
   { text: 'מתנה ליום הולדת של נועה - אוזניות אלחוטיות או ספר בישול', ago: 4 * D + 3 * H, category: 'shopping', tags: ['מתנה', 'משפחה'], title: 'מתנה ליום הולדת של נועה' },
   {
     text: 'עוגת שוקולד של סבתא רחל\n200 גרם שוקולד מריר, 4 ביצים, כוס סוכר, חצי כוס קמח, 150 גרם חמאה.\n25 דקות בתנור על 180 מעלות.',
@@ -135,7 +133,6 @@ const SEEDS: Seed[] = [
       cover: 'news',
     },
   },
-  { text: 'לשלוח הצעת מחיר ללקוח מחיפה', ago: 6 * D + 2 * H, task: { done: true, doneAt: 'ago1d', priority: 'high' }, tags: ['עבודה'] },
   { text: 'מעיין עין חרדלית - שווה לבקר בחורף, מסלול קצר שמתאים לילדים', ago: 8 * D, tags: ['טיול', 'משפחה'], title: 'מעיין עין חרדלית' },
   { text: 'פודקאסט על עסקים קטנים בפריפריה - לראיין בעלי עסקים מהצפון', ago: 9 * D, tags: ['עסק'], category: 'ideas' },
   {
@@ -151,7 +148,6 @@ const SEEDS: Seed[] = [
       cover: 'video',
     },
   },
-  { text: 'לחדש ביטוח רכב', ago: 11 * D, task: { dueIn: 12, priority: 'medium' } },
   { text: 'בית קפה חמוד ביפו שדנה המליצה עליו, יש שם עוגת גבינה מטורפת', ago: 12 * D, title: 'בית קפה ביפו שדנה המליצה', category: 'places' },
   { text: 'קוד לשער בבניין של ההורים: 4521#', ago: 20 * D, tags: ['משפחה'], category: 'other', title: 'קוד לשער אצל ההורים' },
   { text: 'מספר פוליסה של ביטוח הדירה: 77-845120', ago: 30 * D, tags: ['בית'], category: 'other', title: 'מספר פוליסה - ביטוח דירה' },
@@ -209,4 +205,26 @@ export function buildDemoItems(now = new Date()): Item[] {
 // Fill previews for any seeded link without a hand-written one (kept async-compatible with a real service)
 export async function hydrateLinks(items: Item[]): Promise<Item[]> {
   return Promise.all(items.map(async (it) => (it.url && !it.link ? { ...it, link: await localLinkPreview.preview(it.url) } : it)));
+}
+
+/** Demo items removed in later versions - cleaned from phones that already loaded the old demo. */
+const RETIRED_DEMO = new Set([
+  'מתכון ללזניה בשרית לסוף השבוע https://www.foody.co.il/foody_recipe/lasagna-bolognese',
+  'לקבוע פגישה עם רואה החשבון לגבי הדוח השנתי',
+  'להחזיר את הספר לספרייה העירונית',
+  'לשלוח הצעת מחיר ללקוח מחיפה',
+  'לחדש ביטוח רכב',
+]);
+
+export function upgradeDemo(items: Item[]): Item[] {
+  if (!items.some((i) => RETIRED_DEMO.has(i.rawText))) return items;
+  const fresh = buildDemoItems();
+  return items.flatMap((i) => {
+    if (!RETIRED_DEMO.has(i.rawText)) return [i];
+    if (i.rawText.includes('lasagna-bolognese')) {
+      const veg = fresh.find((f) => f.rawText.includes('vegetable-lentil-lasagna'));
+      return veg ? [{ ...veg, id: i.id, createdAt: i.createdAt, favorite: i.favorite }] : [];
+    }
+    return [];
+  });
 }

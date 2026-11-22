@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import type { CategoryId, ChecklistEntry, ClassificationResult, Item } from '../lib/types';
 import { localRepository, settingsStore, uid, type Settings } from '../services/storage';
-import { buildDemoItems } from '../data/demo';
+import { buildDemoItems, upgradeDemo } from '../data/demo';
 import { localLinkPreview } from '../services/linkPreview';
 import { SUGGESTED_TAGS } from '../lib/categories';
 
@@ -64,7 +64,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [items, dispatch] = useReducer(reducer, undefined, () => {
     const saved = localRepository.load();
     if (saved && settingsStore.load().seeded)
-      return saved.map((i) =>
+      return upgradeDemo(saved).map((i) =>
         i.task?.reminderAt && !i.reminderAt
           ? { ...i, reminderAt: i.task.reminderAt, reminderFired: i.task.reminderFired, task: { ...i.task, reminderAt: undefined, reminderFired: undefined } }
           : i,

@@ -11,7 +11,7 @@ const cases: [string, string][] = [
   ['לקבוע תור לרופא ביום ראשון', 'tasks'],
   ['https://www.ynet.co.il/digital/technews/article/abc123', 'readlater'],
   ['https://maps.app.goo.gl/xyz מסעדה איטלקית מומלצת בתל אביב', 'places'],
-  ['מתכון ללזניה בשרית לסוף השבוע', 'recipes'],
+  ['מתכון ללזניה ירקות לסוף השבוע', 'recipes'],
   ['לקנות מטען חדש לאייפון', 'shopping'],
   ['רעיון – ליצור מדריך דיגיטלי לבעלי עסקים', 'ideas'],
   ['לקבוע פגישה עם רואה החשבון', 'tasks'],
@@ -44,11 +44,11 @@ const searches: [string, (titles: string[]) => boolean][] = [
   ['כל הדברים שרציתי לקנות', (t) => t.length >= 3 && t.some((x) => x.includes('מטען'))],
   ['רעיונות לעסק', (t) => t[0]?.includes('מדריך') || t[0]?.includes('פודקאסט')],
   ['המסעדה ששמרתי בתל אביב', (t) => t[0]?.includes('מסעדה איטלקית')],
-  ['משימות שעדיין לא ביצעתי', (t) => t.length === 5],
+  ['משימות שעדיין לא ביצעתי', (t) => t.length === 2],
   ['foody', (t) => t.some((x) => x.includes('לזניה'))],
   ['ynet', (t) => t.some((x) => x.includes('שינה'))],
   ['לזנייה', (t) => t.some((x) => x.includes('לזניה'))], // typo
-  ['עסק', (t) => t.length >= 4],
+  ['עסק', (t) => t.length >= 3],
 ];
 for (const [q, check] of searches) {
   const { hits, intent } = searchItems(demo, q, ['עבודה', 'בית', 'משפחה', 'טיול', 'מתנה', 'עסק']);
