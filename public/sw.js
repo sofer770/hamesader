@@ -1,5 +1,5 @@
 // המסדר - service worker: the app opens and works with no internet connection.
-const CACHE = 'hamesader-v1';
+const CACHE = 'hamesader-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -26,6 +26,8 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Admin page and the stats counter always go straight to the server
+  if (url.pathname.endsWith('.php')) return;
   // Page navigations (including the share target "/?text=..."): network first, offline fallback to the cached app
   if (req.mode === 'navigate') {
     e.respondWith(

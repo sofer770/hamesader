@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { initPwa } from './lib/pwa';
+import { initAnalytics } from './lib/analytics';
 
 initPwa();
+initAnalytics();
 
 document.documentElement.lang = 'he';
 document.documentElement.dir = 'rtl';
