@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Copy, Download, Smartphone, X } from 'lucide-react';
-import { canPromptInstall, canShowInstallHelp, isIOS, onInstallChange, promptInstall } from '../lib/pwa';
+import { canPromptInstall, canShowInstallHelp, isIOS, isStandalone, onInstallChange, promptInstall } from '../lib/pwa';
 import { useStore } from '../state/store';
 import { Logo, Sheet } from './ui';
 
@@ -222,5 +222,22 @@ function InstallSheet({ open, onClose }: { open: boolean; onClose: () => void })
         סגירה
       </button>
     </Sheet>
+  );
+}
+
+/** Shown in the profile when the app already runs installed, so it is clear why there is no install button. */
+export function InstalledBadge() {
+  const native = !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+  if (!native && !isStandalone()) return null;
+  return (
+    <div className="flex items-center gap-3 rounded-3xl border border-[rgb(var(--done))]/30 bg-done-soft p-4">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[rgb(var(--done))] text-xl text-white" aria-hidden>
+        ✓
+      </span>
+      <div>
+        <div className="font-display text-[16px] font-semibold">המסדר מותקן בטלפון</div>
+        <p className="text-[14px] text-muted">{native ? 'זו אפליקציית האנדרואיד.' : 'נפתח מהאייקון במסך הבית.'} לכן לא מופיע כפתור התקנה.</p>
+      </div>
+    </div>
   );
 }

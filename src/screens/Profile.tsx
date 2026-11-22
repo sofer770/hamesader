@@ -4,7 +4,7 @@ import { useStore } from '../state/store';
 import { initials } from '../lib/initials';
 import { useNav } from '../state/nav';
 import { classifier } from '../services/classifier';
-import { InstallCard } from '../components/InstallCard';
+import { InstallCard, InstalledBadge } from '../components/InstallCard';
 import { playReminderSound, REMINDER_SOUNDS, unlockAudio } from '../lib/reminders';
 import { Footer, Logo, ScreenHeader, Segmented, TagChip } from '../components/ui';
 
@@ -57,6 +57,7 @@ export function ProfileScreen() {
         </div>
 
         <InstallCard />
+        <InstalledBadge />
 
         <Card title="איך לקרוא לך?">
           <form
