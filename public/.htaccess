@@ -1,0 +1,13 @@
+# המסדר - so phones recognise it as a real installable app
+AddType application/manifest+json .webmanifest
+AddType application/javascript .js
+
+<IfModule mod_headers.c>
+  # Always check for a new version of the app shell
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "^sw\.js$">
+    Header set Service-Worker-Allowed "/hamesader/"
+  </FilesMatch>
+</IfModule>
