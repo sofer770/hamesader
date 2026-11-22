@@ -65,3 +65,8 @@ try {
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
+
+// The self-update plugin pulls androidx.work 2.10 (needs Android SDK 35); 2.9.1 works the same on SDK 34
+configurations.all {
+    resolutionStrategy.force 'androidx.work:work-runtime:2.9.1'
+}
