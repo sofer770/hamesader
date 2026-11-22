@@ -74,8 +74,8 @@ export function HomeScreen() {
                 ? 'הכל מסודר. מה שומרים היום?'
                 : 'בואו נתחיל לסדר'}
           </p>
+          <InstallButton />
         </div>
-        <InstallButton />
         <button
           onClick={() => nav.switchTab('profile')}
           aria-label="פרופיל"

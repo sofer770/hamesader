@@ -55,7 +55,7 @@ export function InstallButton() {
     <>
       <button
         onClick={run}
-        className="pressable inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[rgb(var(--done))] px-4 font-display text-[15px] font-semibold text-white shadow-soft"
+        className="pressable mt-2 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[rgb(var(--done))] px-3.5 font-display text-[14px] font-semibold text-white shadow-soft"
       >
         <Download size={17} strokeWidth={2.5} /> התקנה
       </button>
