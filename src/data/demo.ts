@@ -1,0 +1,211 @@
+import type { Item, TaskInfo } from '../lib/types';
+import { classifySync } from '../services/classifier/ruleBased';
+import { localLinkPreview } from '../services/linkPreview';
+import { addDays, toISODate } from '../lib/dates';
+import { uid } from '../services/storage';
+
+type Seed = Partial<Omit<Item, 'task'>> & {
+  text: string;
+  /** minutes ago */
+  ago: number;
+  task?: Partial<TaskInfo> & { dueIn?: number };
+  checked?: string[];
+  /** turn the text into a checklist */
+  list?: boolean;
+};
+
+const H = 60;
+const D = 24 * 60;
+
+const SEEDS: Seed[] = [
+  { text: 'הספר של יובל נח הררי שדיברנו עליו בארוחת שישי', ago: 25, reviewed: false, category: 'other', confidence: 0.42 },
+  {
+    text: 'לסופר: חלב, ביצים, לחם, עגבניות, קוטג׳, בננות, נייר טואלט',
+    ago: 55,
+    reviewed: false,
+    list: true,
+    title: 'רשימה לסופר',
+    checked: ['חלב', 'לחם'],
+    tags: ['בית'],
+  },
+  {
+    text: 'מתכון ללזניה בשרית לסוף השבוע https://www.foody.co.il/foody_recipe/lasagna-bolognese',
+    ago: 3 * H,
+    reviewed: false,
+    favorite: true,
+    tags: ['משפחה'],
+    title: 'לזניה בשרית לסוף השבוע',
+    link: {
+      url: 'https://www.foody.co.il/foody_recipe/lasagna-bolognese',
+      domain: 'foody.co.il',
+      siteName: 'Foody',
+      title: 'לזניה בולונז ביתית ועסיסית',
+      description: 'שכבות של רגו בשר, רוטב בשמל קטיפתי ופרמזן. מספיק ל-8 סועדים, אפשר להכין יום מראש.',
+      cover: 'food',
+    },
+  },
+  { text: 'לקבוע פגישה עם רואה החשבון לגבי הדוח השנתי', ago: 2 * H, task: { dueIn: 1, priority: 'high', dueTime: '10:00' }, tags: ['עסק', 'עבודה'] },
+  {
+    text: 'לקבוע תור לרופא שיניים לילדים',
+    ago: 6 * H,
+    task: { dueIn: 0, priority: 'medium', reminderAt: 'today17' },
+    tags: ['משפחה', 'בריאות'],
+  },
+  {
+    text: 'רעיון - ליצור מדריך דיגיטלי לבעלי עסקים: איך לבנות נוכחות באינסטגרם ב-30 יום',
+    ago: 8 * H,
+    favorite: true,
+    title: 'מדריך דיגיטלי לבעלי עסקים',
+    notes: 'להתחיל מ-5 פרקים קצרים, כל פרק עם משימה מעשית. לבדוק מחיר השקה של 79 ש״ח.',
+    tags: ['עסק'],
+  },
+  {
+    text: 'מסעדה איטלקית מומלצת בתל אביב - פסטה טרייה שעושים במקום, חובה להזמין שולחן מראש https://maps.app.goo.gl/trattoria-rothschild',
+    ago: 1 * D + 2 * H,
+    favorite: true,
+    title: 'מסעדה איטלקית מומלצת בתל אביב',
+    tags: ['זוגיות'],
+    link: {
+      url: 'https://maps.app.goo.gl/trattoria-rothschild',
+      domain: 'maps.app.goo.gl',
+      siteName: 'Google Maps',
+      title: 'טרטוריה ברוטשילד · שדרות רוטשילד, תל אביב',
+      description: 'מסעדה איטלקית · ★ 4.7 · פתוח עד 23:30',
+      cover: 'map',
+    },
+  },
+  { text: 'לקנות מטען חדש לאייפון, כזה עם כבל ארוך', ago: 1 * D + 5 * H, title: 'מטען חדש לאייפון' },
+  {
+    text: 'כתבה על כלי AI חדשים https://www.geektime.co.il/ai-tools-for-small-business',
+    ago: 1 * D + 9 * H,
+    tags: ['עסק', 'עבודה'],
+    title: 'כתבה על כלי AI חדשים',
+    link: {
+      url: 'https://www.geektime.co.il/ai-tools-for-small-business',
+      domain: 'geektime.co.il',
+      siteName: 'גיקטיים',
+      title: '10 כלי AI שכל עסק קטן צריך להכיר ב-2026',
+      description: 'מכתיבת פוסטים ועד מענה ללקוחות בוואטסאפ: הכלים שחוסכים שעות עבודה בשבוע.',
+      cover: 'news',
+    },
+  },
+  { text: 'לשלם ארנונה לפני שמגיע הקנס', ago: 2 * D, task: { dueIn: 3, priority: 'high' }, tags: ['בית'] },
+  {
+    text: 'שקשוקה עם פטה וחצילים קלויים https://www.10dakot.co.il/recipe/shakshuka-feta-eggplant',
+    ago: 2 * D + 4 * H,
+    title: 'שקשוקה עם פטה וחצילים',
+    link: {
+      url: 'https://www.10dakot.co.il/recipe/shakshuka-feta-eggplant',
+      domain: '10dakot.co.il',
+      siteName: '10 דקות',
+      title: 'שקשוקה עם פטה וחצילים קלויים',
+      description: 'ארוחת בוקר של שבת במחבת אחת. 25 דקות מההתחלה ועד הניגוב.',
+      cover: 'food',
+    },
+  },
+  {
+    text: 'רעיונות לחופשה באיטליה: טוסקנה באביב, אגם קומו, יום שלם בבולוניה רק בשביל האוכל',
+    ago: 3 * D,
+    tags: ['טיול'],
+    category: 'ideas',
+    title: 'רעיונות לחופשה באיטליה',
+  },
+  { text: 'להחזיר את הספר לספרייה העירונית', ago: 4 * D, task: { dueIn: -1, priority: 'low' } },
+  { text: 'מתנה ליום הולדת של נועה - אוזניות אלחוטיות או ספר בישול', ago: 4 * D + 3 * H, category: 'shopping', tags: ['מתנה', 'משפחה'], title: 'מתנה ליום הולדת של נועה' },
+  {
+    text: 'עוגת שוקולד של סבתא רחל\n200 גרם שוקולד מריר, 4 ביצים, כוס סוכר, חצי כוס קמח, 150 גרם חמאה.\n25 דקות בתנור על 180 מעלות.',
+    ago: 5 * D,
+    favorite: true,
+    tags: ['משפחה'],
+    title: 'עוגת שוקולד של סבתא רחל',
+    category: 'recipes',
+  },
+  { text: 'להזמין טכנאי למזגן בסלון', ago: 5 * D + 6 * H, task: { done: true, doneAt: 'ago2d', priority: 'medium' }, tags: ['בית'] },
+  {
+    text: 'שינה טובה יותר: 7 הרגלים פשוטים https://www.ynet.co.il/health/article/better-sleep-habits',
+    ago: 6 * D,
+    tags: ['בריאות'],
+    title: 'שינה טובה יותר: 7 הרגלים פשוטים',
+    link: {
+      url: 'https://www.ynet.co.il/health/article/better-sleep-habits',
+      domain: 'ynet.co.il',
+      siteName: 'ynet',
+      title: 'שינה טובה יותר: 7 הרגלים פשוטים שאפשר להתחיל הערב',
+      description: 'מה קורה לגוף כשאנחנו נרדמים מול מסך, ולמה שעה קבועה חשובה יותר ממספר השעות.',
+      cover: 'news',
+    },
+  },
+  { text: 'לשלוח הצעת מחיר ללקוח מחיפה', ago: 6 * D + 2 * H, task: { done: true, doneAt: 'ago1d', priority: 'high' }, tags: ['עבודה'] },
+  { text: 'מעיין עין חרדלית - שווה לבקר בחורף, מסלול קצר שמתאים לילדים', ago: 8 * D, tags: ['טיול', 'משפחה'], title: 'מעיין עין חרדלית' },
+  { text: 'פודקאסט על עסקים קטנים בפריפריה - לראיין בעלי עסקים מהצפון', ago: 9 * D, tags: ['עסק'], category: 'ideas' },
+  {
+    text: 'הרצאה מעולה על בניית הרגלים https://www.youtube.com/watch?v=habits-talk',
+    ago: 10 * D,
+    title: 'הרצאה מעולה על בניית הרגלים',
+    link: {
+      url: 'https://www.youtube.com/watch?v=habits-talk',
+      domain: 'youtube.com',
+      siteName: 'YouTube',
+      title: 'איך בונים הרגל שנשאר - הרצאה מלאה',
+      description: '48 דקות · על שינויים קטנים שמצטברים לשינוי גדול',
+      cover: 'video',
+    },
+  },
+  { text: 'לחדש ביטוח רכב', ago: 11 * D, task: { dueIn: 12, priority: 'medium' } },
+  { text: 'בית קפה חמוד ביפו שדנה המליצה עליו, יש שם עוגת גבינה מטורפת', ago: 12 * D, title: 'בית קפה ביפו שדנה המליצה', category: 'places' },
+  { text: 'קוד לשער בבניין של ההורים: 4521#', ago: 20 * D, tags: ['משפחה'], category: 'other', title: 'קוד לשער אצל ההורים' },
+  { text: 'מספר פוליסה של ביטוח הדירה: 77-845120', ago: 30 * D, tags: ['בית'], category: 'other', title: 'מספר פוליסה - ביטוח דירה' },
+];
+
+export function buildDemoItems(now = new Date()): Item[] {
+  return SEEDS.map((s) => {
+    const created = new Date(now.getTime() - s.ago * 60_000);
+    const r = classifySync({ text: s.text, now: created });
+    const category = s.category ?? (s.task ? 'tasks' : r.category);
+    const isTask = category === 'tasks';
+    const listItems = s.list ? r.listItems : [];
+    let task: TaskInfo | undefined;
+    if (isTask) {
+      const t = s.task ?? {};
+      let reminderAt: string | undefined;
+      if (t.reminderAt === 'today17') {
+        const d = new Date(now);
+        d.setHours(17, 0, 0, 0);
+        reminderAt = d.toISOString();
+      }
+      task = {
+        done: t.done ?? false,
+        doneAt: t.doneAt ? addDays(now, -Number(t.doneAt.replace(/\D/g, ''))).toISOString() : undefined,
+        dueDate: t.dueIn !== undefined ? toISODate(addDays(now, t.dueIn)) : r.dueDate,
+        dueTime: t.dueTime ?? r.dueTime,
+        reminderAt,
+        priority: t.priority ?? 'medium',
+      };
+    }
+    const url = r.url;
+    return {
+      id: uid(),
+      createdAt: created.toISOString(),
+      updatedAt: created.toISOString(),
+      rawText: s.text,
+      title: s.title ?? r.title,
+      summary: s.link?.description ?? r.summary,
+      category,
+      contentType: url ? 'link' : isTask ? 'task' : listItems.length ? 'list' : category === 'ideas' ? 'idea' : 'text',
+      url,
+      link: s.link ?? undefined,
+      tags: s.tags ?? r.tags,
+      notes: s.notes ?? '',
+      favorite: s.favorite ?? false,
+      reviewed: s.reviewed ?? true,
+      confidence: s.confidence ?? r.confidence,
+      task,
+      checklist: listItems.length ? listItems.map((text) => ({ id: uid(), text, checked: s.checked?.includes(text) ?? false })) : undefined,
+    } satisfies Item;
+  });
+}
+
+// Fill previews for any seeded link without a hand-written one (kept async-compatible with a real service)
+export async function hydrateLinks(items: Item[]): Promise<Item[]> {
+  return Promise.all(items.map(async (it) => (it.url && !it.link ? { ...it, link: await localLinkPreview.preview(it.url) } : it)));
+}

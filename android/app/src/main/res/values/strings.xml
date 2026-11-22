@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">המסדר</string>
+    <string name="title_activity_main">המסדר</string>
+    <string name="package_name">il.co.elhabriut.hamesader</string>
+    <string name="custom_url_scheme">il.co.elhabriut.hamesader</string>
+</resources>

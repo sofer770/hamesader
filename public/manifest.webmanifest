@@ -1,0 +1,47 @@
+{
+  "name": "המסדר",
+  "short_name": "המסדר",
+  "description": "כל מה ששמרת לעצמך, מסודר במקום אחד",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FBF8F3",
+  "theme_color": "#3A2F86",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "id": "./",
+  "scope": "./",
+  "orientation": "portrait",
+  "categories": [
+    "productivity",
+    "lifestyle"
+  ]
+}

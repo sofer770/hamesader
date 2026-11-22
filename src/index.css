@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Layout concept: a calm personal "drawer" - warm paper ground, white cards, one deep indigo accent,
+   soft pastel tones only where a category lives. */
+:root {
+  --bg: 251 248 243;
+  --surface: 255 255 255;
+  --sunken: 243 239 232;
+  --ink: 30 26 46;
+  --muted: 100 95 118;
+  --faint: 156 150 170;
+  --line: 233 227 218;
+  --brand: 58 47 134;
+  --brand-soft: 236 233 250;
+  --brand-ink: 255 255 255;
+  --done: 38 132 82;
+  --done-soft: 224 243 231;
+  --warn: 196 120 10;
+  --warn-soft: 253 241 214;
+  --danger: 196 50 50;
+  --danger-soft: 252 230 230;
+  --shadow: 44 34 90;
+  --hero: 58 47 134;
+  --hero-ink: 255 255 255;
+
+  --c-recipes-bg: 255 235 220;   --c-recipes-ink: 172 78 26;
+  --c-shopping-bg: 218 242 232;  --c-shopping-ink: 22 116 82;
+  --c-ideas-bg: 255 242 200;     --c-ideas-ink: 150 104 0;
+  --c-tasks-bg: 233 230 252;     --c-tasks-ink: 76 64 178;
+  --c-readlater-bg: 221 237 252; --c-readlater-ink: 30 98 168;
+  --c-places-bg: 252 227 235;    --c-places-ink: 176 46 88;
+  --c-other-bg: 239 236 230;     --c-other-ink: 106 98 88;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: 19 17 28; --surface: 29 26 42; --sunken: 37 34 53; --ink: 240 237 248; --muted: 170 164 188; --faint: 112 106 132;
+    --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44;
+    --warn: 242 184 86; --warn-soft: 66 50 20; --danger: 242 114 114; --danger-soft: 70 30 34; --shadow: 0 0 0; --hero: 50 42 112; --hero-ink: 244 241 255;
+    --c-recipes-bg: 64 38 24;   --c-recipes-ink: 255 178 130;
+    --c-shopping-bg: 22 56 44;  --c-shopping-ink: 120 220 176;
+    --c-ideas-bg: 62 50 14;     --c-ideas-ink: 250 210 100;
+    --c-tasks-bg: 44 40 86;     --c-tasks-ink: 184 176 255;
+    --c-readlater-bg: 22 44 70; --c-readlater-ink: 140 196 250;
+    --c-places-bg: 66 26 42;    --c-places-ink: 250 150 186;
+    --c-other-bg: 44 42 50;     --c-other-ink: 196 188 176;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: 19 17 28; --surface: 29 26 42; --sunken: 37 34 53; --ink: 240 237 248; --muted: 170 164 188; --faint: 112 106 132;
+  --line: 51 47 70; --brand: 164 152 255; --brand-soft: 48 42 88; --brand-ink: 22 18 52; --done: 98 204 144; --done-soft: 28 58 44;
+  --warn: 242 184 86; --warn-soft: 66 50 20; --danger: 242 114 114; --danger-soft: 70 30 34; --shadow: 0 0 0; --hero: 50 42 112; --hero-ink: 244 241 255;
+  --c-recipes-bg: 64 38 24;   --c-recipes-ink: 255 178 130;
+  --c-shopping-bg: 22 56 44;  --c-shopping-ink: 120 220 176;
+  --c-ideas-bg: 62 50 14;     --c-ideas-ink: 250 210 100;
+  --c-tasks-bg: 44 40 86;     --c-tasks-ink: 184 176 255;
+  --c-readlater-bg: 22 44 70; --c-readlater-ink: 140 196 250;
+  --c-places-bg: 66 26 42;    --c-places-ink: 250 150 186;
+  --c-other-bg: 44 42 50;     --c-other-ink: 196 188 176;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: 'Assistant', 'Arial Hebrew', 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3 { text-wrap: balance; }
+.tabular { font-variant-numeric: tabular-nums; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+
+:focus-visible {
+  outline: 2.5px solid rgb(var(--brand));
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+.pressable { transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.2s ease; }
+.pressable:active { transform: scale(0.97); }
+
+mark.hl {
+  background: rgb(var(--c-ideas-bg));
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+/* Link preview covers - drawn locally, no external images */
+.cover { position: relative; overflow: hidden; }
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1px);
+  background-size: 14px 14px;
+  opacity: 0.6;
+}
+.cover-food { background: linear-gradient(135deg, #ffd7b8, #ffb38a); }
+.cover-map { background: linear-gradient(135deg, #cdeedd, #9fd8c0); }
+.cover-news { background: linear-gradient(135deg, #d6e7fb, #a9c8f0); }
+.cover-video { background: linear-gradient(135deg, #fbd3de, #f3a3b9); }
+.cover-shop { background: linear-gradient(135deg, #ffeab0, #ffd36e); }
+.cover-social { background: linear-gradient(135deg, #e6defc, #c4b5f5); }
+.cover-web { background: linear-gradient(135deg, #e9e5dd, #d4cdc0); }
+.cover-map::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 46%, rgb(255 255 255 / 0.7) 47%, rgb(255 255 255 / 0.7) 50%, transparent 51%),
+    linear-gradient(20deg, transparent 60%, rgb(255 255 255 / 0.55) 61%, rgb(255 255 255 / 0.55) 63%, transparent 64%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
