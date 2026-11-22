@@ -36,7 +36,7 @@ export function ProfileScreen() {
         <div className="flex items-center gap-4 rounded-3xl bg-hero p-5 text-hero-ink shadow-fab">
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/15 font-display text-3xl font-bold">{initials(settings.name)}</div>
           <div className="min-w-0">
-            <div className="font-display text-xl font-semibold">{settings.name}</div>
+            <div className="font-display text-xl font-semibold">{settings.name || 'שלום!'}</div>
             <div className="tabular text-[14px] opacity-85">
               {items.length} פריטים שמורים · {open} משימות פתוחות · {favs} מועדפים
             </div>
@@ -64,7 +64,7 @@ export function ProfileScreen() {
             onSubmit={(e) => {
               e.preventDefault();
               if (name.trim()) {
-                updateSettings({ name: name.trim() });
+                updateSettings({ name: name.trim(), nameAsked: true });
                 store.showToast({ text: `נעים להכיר, ${name.trim()}`, emoji: '👋' });
               }
             }}

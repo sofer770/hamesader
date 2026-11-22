@@ -5,6 +5,7 @@ import { useNav, type Tab } from '../state/nav';
 import { useStore } from '../state/store';
 import { Logo } from './ui';
 import { Composer } from './Composer';
+import { Welcome } from './Welcome';
 
 const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
   { id: 'home', label: 'בית', icon: Home },
@@ -259,6 +260,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <Composer />
+      <Welcome />
       <ToastView />
       {reminder.ringing && <ReminderAlert id={reminder.ringing} onClose={reminder.stop} />}
     </div>

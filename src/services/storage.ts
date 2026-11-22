@@ -17,15 +17,18 @@ export interface Settings {
   recentSearches: string[];
   customTags: string[];
   reminderSound: 'bell' | 'beep' | 'chime' | 'none';
+  /** true once the user was asked for their name (welcome screen) */
+  nameAsked: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  name: 'יאיר',
+  name: '',
   theme: 'system',
   seeded: false,
   recentSearches: [],
   customTags: [],
   reminderSound: 'bell',
+  nameAsked: false,
 };
 
 const KEY_ITEMS = 'hamesader.items.v1';
@@ -61,7 +64,12 @@ export const localRepository: ItemsRepository = {
 };
 
 export const settingsStore = {
-  load: (): Settings => ({ ...DEFAULT_SETTINGS, ...(read<Partial<Settings>>(KEY_SETTINGS) ?? {}) }),
+  load: (): Settings => {
+    const s = { ...DEFAULT_SETTINGS, ...(read<Partial<Settings>>(KEY_SETTINGS) ?? {}) };
+    // Older versions greeted everyone as "יאיר" - clear that default so each person is asked for their own name
+    if (!s.nameAsked && s.name === 'יאיר') s.name = '';
+    return s;
+  },
   save: (s: Settings) => write(KEY_SETTINGS, s),
 };
 

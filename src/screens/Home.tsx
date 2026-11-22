@@ -61,7 +61,7 @@ export function HomeScreen() {
         <Logo size={44} className="shadow-soft lg:hidden" />
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-[24px] font-semibold leading-tight">
-            {greeting(now.getHours())}, {settings.name} 👋
+            {greeting(now.getHours())}{settings.name ? `, ${settings.name}` : ''} 👋
           </h1>
           <p className="tabular mt-0.5 flex flex-wrap gap-x-2 text-[14px]">
             <span className="whitespace-nowrap font-semibold text-brand">{gregorianToday(now)}</span>
