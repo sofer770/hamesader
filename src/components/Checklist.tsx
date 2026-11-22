@@ -3,6 +3,7 @@ import { Check, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import type { Item } from '../lib/types';
 import { useStore } from '../state/store';
 import { uid } from '../services/storage';
+import { L } from '../lib/i18n';
 
 export function Checklist({ item, compact = false }: { item: Item; compact?: boolean }) {
   const { toggleCheck, update, showToast } = useStore();
@@ -23,25 +24,25 @@ export function Checklist({ item, compact = false }: { item: Item; compact?: boo
     <div>
       <div className="mb-2 flex items-center justify-between text-[13px] text-muted">
         <span className="tabular font-semibold">
-          {list.length ? (done === list.length ? '🎉 הכל נקנה!' : `${done} מתוך ${list.length} נקנו`) : 'הרשימה ריקה'}
+          {list.length ? (done === list.length ? L('🎉 הכל נקנה!', '🎉 All bought!') : L(`${done} מתוך ${list.length} נקנו`, `${done} of ${list.length} bought`)) : L('הרשימה ריקה', 'The list is empty')}
         </span>
         {done > 0 && (
           <span className="flex gap-1">
             <button
               onClick={() => {
                 update(item.id, (i) => ({ checklist: i.checklist?.map((c) => ({ ...c, checked: false })) }));
-                showToast({ text: 'הסימונים אופסו. רשימה מוכנה לקנייה הבאה', emoji: '🔄' });
+                showToast({ text: L('הסימונים אופסו. רשימה מוכנה לקנייה הבאה', 'Checks cleared. The list is ready for the next shop'), emoji: '🔄' });
               }}
               className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 font-semibold hover:bg-sunken"
             >
-              <RotateCcw size={13} /> איפוס סימונים
+              <RotateCcw size={13} /> {L('איפוס סימונים', 'Uncheck all')}
             </button>
             {!compact && (
               <button
                 onClick={() => update(item.id, (i) => ({ checklist: i.checklist?.filter((c) => !c.checked) }))}
                 className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 font-semibold hover:bg-sunken"
               >
-                <Trash2 size={13} /> הסרת מה שנקנה
+                <Trash2 size={13} /> {L('הסרת מה שנקנה', 'Remove bought items')}
               </button>
             )}
           </span>
@@ -63,7 +64,7 @@ export function Checklist({ item, compact = false }: { item: Item; compact?: boo
             <button
               onClick={() => update(item.id, (i) => ({ checklist: i.checklist?.filter((x) => x.id !== c.id) }))}
               className="grid h-8 w-8 place-items-center rounded-full text-faint hover:bg-sunken hover:text-danger lg:opacity-0 lg:group-hover:opacity-100"
-              aria-label={`הסרת ${c.text}`}
+              aria-label={L(`הסרת ${c.text}`, `Remove ${c.text}`)}
             >
               <X size={15} />
             </button>
@@ -81,10 +82,10 @@ export function Checklist({ item, compact = false }: { item: Item; compact?: boo
           id={`add-product-${item.id}`}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="הוספת מוצר (אפשר כמה, עם פסיקים)"
+          placeholder={L('הוספת מוצר (אפשר כמה, עם פסיקים)', 'Add an item (several work too, with commas)')}
           className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 text-[15px] outline-none focus:border-brand/60"
         />
-        <button type="submit" disabled={!draft.trim()} className="pressable grid h-11 w-11 place-items-center rounded-xl bg-brand text-brand-ink disabled:opacity-40" aria-label="הוספה">
+        <button type="submit" disabled={!draft.trim()} className="pressable grid h-11 w-11 place-items-center rounded-xl bg-brand text-brand-ink disabled:opacity-40" aria-label={L('הוספה', 'Add')}>
           <Plus size={20} />
         </button>
       </form>

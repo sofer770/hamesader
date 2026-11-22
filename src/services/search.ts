@@ -2,6 +2,7 @@ import type { CategoryId, Item } from '../lib/types';
 import { fuzzyWordMatch, normalize, tokenize, variants } from '../lib/hebrew';
 import { CATEGORY_BY_ID } from '../lib/categories';
 import { daysBetween } from '../lib/dates';
+import { isEn } from '../lib/i18n';
 
 /** Understanding of a natural-language query, shown back to the user as chips. */
 export interface QueryIntent {
@@ -21,12 +22,12 @@ export interface SearchHit {
 }
 
 const CATEGORY_WORDS: [CategoryId, string[]][] = [
-  ['recipes', ['מתכון', 'מתכונים', 'לבשל', 'בישול', 'אוכל', 'לאפות']],
-  ['shopping', ['לקנות', 'קניות', 'קנייה', 'לקנייה', 'רשימת', 'סופר', 'מוצרים']],
-  ['ideas', ['רעיון', 'רעיונות']],
-  ['tasks', ['משימה', 'משימות', 'לעשות', 'מטלות', 'תזכורות', 'תזכורת', 'סידורים']],
-  ['readlater', ['כתבה', 'כתבות', 'לקרוא', 'לקריאה', 'מאמר', 'מאמרים', 'קישור', 'קישורים', 'לינק', 'לינקים', 'סרטון', 'סרטונים']],
-  ['places', ['מסעדה', 'מסעדות', 'מקום', 'מקומות', 'לבקר', 'בית קפה', 'בתי קפה']],
+  ['recipes', ['מתכון', 'מתכונים', 'לבשל', 'בישול', 'אוכל', 'לאפות', 'recipe', 'recipes', 'cook', 'cooking', 'bake', 'baking', 'food']],
+  ['shopping', ['לקנות', 'קניות', 'קנייה', 'לקנייה', 'רשימת', 'סופר', 'מוצרים', 'buy', 'shopping', 'groceries', 'grocery', 'supermarket', 'purchase']],
+  ['ideas', ['רעיון', 'רעיונות', 'idea', 'ideas']],
+  ['tasks', ['משימה', 'משימות', 'לעשות', 'מטלות', 'תזכורות', 'תזכורת', 'סידורים', 'task', 'tasks', 'todo', 'to do', 'errands', 'reminder', 'reminders']],
+  ['readlater', ['כתבה', 'כתבות', 'לקרוא', 'לקריאה', 'מאמר', 'מאמרים', 'קישור', 'קישורים', 'לינק', 'לינקים', 'סרטון', 'סרטונים', 'article', 'articles', 'read', 'reading', 'link', 'links', 'video', 'videos']],
+  ['places', ['מסעדה', 'מסעדות', 'מקום', 'מקומות', 'לבקר', 'בית קפה', 'בתי קפה', 'restaurant', 'restaurants', 'place', 'places', 'visit', 'cafe', 'café', 'coffee shop']],
 ];
 
 const STOP = new Set(
@@ -35,11 +36,15 @@ const STOP = new Set(
     'על', 'עם', 'לי', 'אני', 'יש', 'זה', 'היה', 'הזה', 'הזאת', 'אותו', 'אותה', 'תמצא', 'למצוא', 'תראה', 'תביא', 'הראה', 'תן', 'מצא',
     'בבקשה', 'או', 'גם', 'שלי', 'פעם', 'ההוא', 'ההיא', 'אחד', 'אחת', 'כמה', 'עוד', 'עדיין', 'לא', 'כבר', 'ש', 'ה', 'ו', 'ב', 'ל', 'מ',
     'שם', 'מישהו', 'שעדיין', 'שעוד', 'ביצעתי', 'עשיתי', 'סיימתי', 'בוצעו', 'הושלמו', 'פתוחות', 'פתוחים', 'שנשארו', 'אמר', 'המליץ', 'שהמליצו', 'המליצו', 'ששלחתי', 'שלחתי', 'לעצמי',
+    // English
+    'where', 'did', 'i', 'save', 'saved', 'the', 'a', 'an', 'all', 'things', 'thing', 'stuff', 'that', 'wanted', 'want', 'to', 'what', 'of', 'for',
+    'on', 'with', 'me', 'my', 'is', 'was', 'this', 'it', 'find', 'show', 'give', 'please', 'or', 'also', 'one', 'some', 'still', 'not', 'yet',
+    'already', 'haven', 'havent', 'have', 'done', 'finished', 'completed', 'open', 'remaining', 'someone', 'recommended', 'sent', 'myself', 'in', 'at', 'about', 'from', 'that', 'which',
   ].map(normalize),
 );
 
-const OPEN_RE = /(עדיין לא|שלא (ביצעתי|עשיתי|סיימתי)|לא (ביצעתי|עשיתי|בוצעו|הושלמו)|פתוחות|פתוחים|שנשארו|מחכות|ממתינות)/;
-const DONE_RE = /(שביצעתי|שעשיתי|שסיימתי|הושלמו|שהושלמו|בוצעו|גמורות)/;
+const OPEN_RE = /(\b(?:not done|haven'?t (?:done|finished)|still open|open|remaining|pending|not (?:yet )?(?:done|finished|completed))\b|עדיין לא|שלא (ביצעתי|עשיתי|סיימתי)|לא (ביצעתי|עשיתי|בוצעו|הושלמו)|פתוחות|פתוחים|שנשארו|מחכות|ממתינות)/;
+const DONE_RE = /(\b(?:already done|i (?:did|finished|completed)|completed|finished)\b|שביצעתי|שעשיתי|שסיימתי|הושלמו|שהושלמו|בוצעו|גמורות)/;
 
 export function parseQuery(query: string, knownTags: string[] = []): QueryIntent {
   const raw = query.trim();
@@ -48,10 +53,10 @@ export function parseQuery(query: string, knownTags: string[] = []): QueryIntent
 
   if (OPEN_RE.test(raw)) intent.taskStatus = 'open';
   else if (DONE_RE.test(raw)) intent.taskStatus = 'done';
-  if (/מועדפ/.test(raw)) intent.favorites = true;
-  if (/(השבוע|בשבוע האחרון)/.test(raw)) intent.recentDays = 7;
-  else if (/(היום)/.test(raw) && !intent.taskStatus) intent.recentDays = 1;
-  else if (/(החודש|בחודש האחרון)/.test(raw)) intent.recentDays = 31;
+  if (/מועדפ|\bfavou?rites?\b/i.test(raw)) intent.favorites = true;
+  if (/(השבוע|בשבוע האחרון|\bthis week\b|\blast week\b|\bpast week\b)/i.test(raw)) intent.recentDays = 7;
+  else if (/(היום|\btoday\b)/i.test(raw) && !intent.taskStatus) intent.recentDays = 1;
+  else if (/(החודש|בחודש האחרון|\bthis month\b|\blast month\b|\bpast month\b)/i.test(raw)) intent.recentDays = 31;
 
   let rest = ' ' + n + ' ';
   for (const [cat, words] of CATEGORY_WORDS) {
@@ -78,6 +83,7 @@ export function parseQuery(query: string, knownTags: string[] = []): QueryIntent
   }
 
   const cleaned = rest
+    .replace(/\b(this week|last week|past week|this month|last month|past month|today|favou?rites?|not done|still open)\b/g, ' ')
     .replace(/(עדיין לא|שלא|ביצעתי|עשיתי|סיימתי|פתוחות|פתוחים|שנשארו|הושלמו|שהושלמו|מועדפים|מועדפות|מועדף|השבוע|החודש|היום|האחרון|בשבוע|בחודש)/g, ' ')
     .split(' ')
     .filter((t) => t.length >= 2 && !variants(t).some((v) => STOP.has(v)));
@@ -151,10 +157,6 @@ export function searchItems(items: Item[], query: string, knownTags: string[] = 
 }
 
 /** Ready-made natural-language examples shown on the empty search screen. */
-export const EXAMPLE_QUERIES = [
-  'איפה שמרתי את המתכון לעוגת שוקולד?',
-  'כל הדברים שרציתי לקנות',
-  'רעיונות לעסק',
-  'המסעדה ששמרתי בתל אביב',
-  'משימות שעדיין לא ביצעתי',
-];
+export const EXAMPLE_QUERIES = isEn
+  ? ['Where did I save the lentil soup recipe?', 'All the things I wanted to buy', 'Ideas for the business', 'The cafe I saved', "Tasks I haven't done yet"]
+  : ['איפה שמרתי את המתכון לעוגת שוקולד?', 'כל הדברים שרציתי לקנות', 'רעיונות לעסק', 'המסעדה ששמרתי בתל אביב', 'משימות שעדיין לא ביצעתי'];

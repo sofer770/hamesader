@@ -15,6 +15,7 @@ import { TagEditor } from '../components/TagEditor';
 import { CategoryPicker } from '../components/CategoryPicker';
 import { CategoryBadge, EmptyState, Footer, IconButton, ScreenHeader, Segmented } from '../components/ui';
 import { TaskCheck } from '../components/ItemCard';
+import { L } from '../lib/i18n';
 
 function Block({ title, icon, children, action }: { title: string; icon?: ReactNode; children: ReactNode; action?: ReactNode }) {
   return (
@@ -54,8 +55,8 @@ export function ItemDetailScreen({ id }: { id: string }) {
   if (!item) {
     return (
       <div>
-        <ScreenHeader title="הפריט לא נמצא" />
-        <EmptyState emoji="🫥" title="הפריט הזה כבר לא כאן" text="אולי הוא נמחק. אפשר לחזור ולחפש משהו אחר." />
+        <ScreenHeader title={L('הפריט לא נמצא', 'Item not found')} />
+        <EmptyState emoji="🫥" title={L('הפריט הזה כבר לא כאן', 'This item is no longer here')} text={L('אולי הוא נמחק. אפשר לחזור ולחפש משהו אחר.', 'It may have been deleted. You can go back and search for something else.')} />
         <Footer />
       </div>
     );
@@ -76,7 +77,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
       return patch;
     });
     nav.markFiled(cat);
-    store.showToast({ text: `הועבר ל${CATEGORY_BY_ID[cat].name}`, emoji: CATEGORY_BY_ID[cat].emoji });
+    store.showToast({ text: L(`הועבר ל${CATEGORY_BY_ID[cat].name}`, `Moved to ${CATEGORY_BY_ID[cat].name}`), emoji: CATEGORY_BY_ID[cat].emoji });
   }
 
   const shareText = [item.title, item.url, item.notes].filter(Boolean).join('\n');
@@ -85,7 +86,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
     try {
       if ((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) {
         const { Share } = await import('@capacitor/share');
-        await Share.share({ title: item!.title, text: shareText, dialogTitle: 'שיתוף' });
+        await Share.share({ title: item!.title, text: shareText, dialogTitle: L('שיתוף', 'Share') });
         return;
       }
       if (navigator.share) {
@@ -97,9 +98,9 @@ export function ItemDetailScreen({ id }: { id: string }) {
       if ((e as Error)?.name === 'AbortError') return;
       try {
         await navigator.clipboard.writeText(shareText);
-        store.showToast({ text: 'הועתק. אפשר להדביק בכל מקום', emoji: '📋' });
+        store.showToast({ text: L('הועתק. אפשר להדביק בכל מקום', 'Copied. You can paste it anywhere'), emoji: '📋' });
       } catch {
-        store.showToast({ text: 'אפשר לסמן את הטקסט ולהעתיק ידנית', emoji: '✋' });
+        store.showToast({ text: L('אפשר לסמן את הטקסט ולהעתיק ידנית', 'You can select the text and copy it manually'), emoji: '✋' });
       }
     }
   }
@@ -107,7 +108,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
   function saveEdit() {
     up({ title: title.trim() || item!.title, rawText: raw.trim() || item!.rawText });
     setEditing(false);
-    store.showToast({ text: 'השינויים נשמרו', emoji: '✏️' });
+    store.showToast({ text: L('השינויים נשמרו', 'Changes saved'), emoji: '✏️' });
   }
 
   const task = item.task;
@@ -119,16 +120,16 @@ export function ItemDetailScreen({ id }: { id: string }) {
         emoji={c.emoji}
         actions={
           <>
-            <IconButton label={item.favorite ? 'הסר ממועדפים' : 'הוסף למועדפים'} active={item.favorite} onClick={() => store.toggleFavorite(item.id)}>
+            <IconButton label={item.favorite ? L('הסר ממועדפים', 'Remove from favorites') : L('הוסף למועדפים', 'Add to favorites')} active={item.favorite} onClick={() => store.toggleFavorite(item.id)}>
               <Star size={20} fill={item.favorite ? 'currentColor' : 'none'} />
             </IconButton>
-            <IconButton label="תזכורת" active={!!item.reminderAt && !item.reminderFired} onClick={() => setReminderOpen(true)}>
+            <IconButton label={L('תזכורת', 'Reminder')} active={!!item.reminderAt && !item.reminderFired} onClick={() => setReminderOpen(true)}>
               <Bell size={20} fill={item.reminderAt && !item.reminderFired ? 'currentColor' : 'none'} />
             </IconButton>
-            <IconButton label="שיתוף" onClick={share}>
+            <IconButton label={L('שיתוף', 'Share')} onClick={share}>
               <Share2 size={20} />
             </IconButton>
-            <IconButton label="עריכה" onClick={() => setEditing((e) => !e)}>
+            <IconButton label={L('עריכה', 'Edit')} onClick={() => setEditing((e) => !e)}>
               <Pencil size={19} />
             </IconButton>
           </>
@@ -139,23 +140,26 @@ export function ItemDetailScreen({ id }: { id: string }) {
         {!item.reviewed && (
           <div className="animate-pop-in rounded-3xl border border-brand/25 bg-brand-soft p-4">
             <p className="text-[15px]">
-              המסדר שם את זה ב<b>{c.emoji} {c.name}</b>
-              {item.confidence < 0.6 ? ', אבל לא בטוח. ' : '. '}
-              זה המקום הנכון?
+              {L('המסדר שם את זה ב', 'Hamesader filed this in ')}
+              <b>
+                {c.emoji} {c.name}
+              </b>
+              {item.confidence < 0.6 ? L(', אבל לא בטוח. ', ", but isn't sure. ") : '. '}
+              {L('זה המקום הנכון?', 'Is this the right place?')}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={() => {
                   up({ reviewed: true });
                   nav.markFiled(item.category);
-                  store.showToast({ text: 'מעולה, מצא את הבית שלו', emoji: '🏡' });
+                  store.showToast({ text: L('מעולה, מצא את הבית שלו', 'Great, it found its home'), emoji: '🏡' });
                 }}
                 className="pressable inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 font-semibold text-brand-ink"
               >
-                <Check size={17} /> כן, מעולה
+                <Check size={17} /> {L('כן, מעולה', 'Yes, great')}
               </button>
               <button onClick={() => setPicker(true)} className="pressable h-10 rounded-xl border border-brand/30 bg-surface px-4 font-semibold text-brand">
-                להעביר לקטגוריה אחרת
+                {L('להעביר לקטגוריה אחרת', 'Move to another category')}
               </button>
             </div>
           </div>
@@ -169,7 +173,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-xl border border-brand/50 bg-surface px-3 py-2 font-display text-[22px] font-semibold outline-none"
-              aria-label="כותרת"
+              aria-label={L('כותרת', 'Title')}
             />
           ) : (
             <div className="flex items-start gap-3">
@@ -184,10 +188,10 @@ export function ItemDetailScreen({ id }: { id: string }) {
           <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[13px] text-muted">
             <CategoryBadge id={item.category} size="md" onClick={() => setPicker(true)} />
             <button onClick={() => setPicker(true)} className="font-semibold text-brand hover:underline">
-              שינוי קטגוריה
+              {L('שינוי קטגוריה', 'Change category')}
             </button>
             <span className="text-faint">·</span>
-            <span>נשמר {formatFullDate(item.createdAt)}</span>
+            <span>{L('נשמר', 'Saved')} {formatFullDate(item.createdAt)}</span>
           </div>
         </div>
 
@@ -204,10 +208,10 @@ export function ItemDetailScreen({ id }: { id: string }) {
           </span>
           <span className="flex-1">
             <span className="block font-display text-[16px] font-semibold">
-              {item.reminderAt && !item.reminderFired ? `תזכורת ${formatReminder(item.reminderAt)}` : 'הוספת תזכורת'}
+              {item.reminderAt && !item.reminderFired ? L(`תזכורת ${formatReminder(item.reminderAt)}`, `Reminder ${formatReminder(item.reminderAt)}`) : L('הוספת תזכורת', 'Add a reminder')}
             </span>
             <span className="block text-[13px] text-muted">
-              {item.reminderAt && !item.reminderFired ? 'לחצו כדי לשנות או לבטל' : 'צלצול ותזכורת בזמן שתבחרו'}
+              {item.reminderAt && !item.reminderFired ? L('לחצו כדי לשנות או לבטל', 'Tap to change or cancel') : L('צלצול ותזכורת בזמן שתבחרו', 'A ring and a reminder at the time you choose')}
             </span>
           </span>
         </button>
@@ -215,10 +219,10 @@ export function ItemDetailScreen({ id }: { id: string }) {
 
         {/* Task */}
         {task && (
-          <Block title="פרטי המשימה" icon={<CalendarDays size={16} />}>
+          <Block title={L('פרטי המשימה', 'Task details')} icon={<CalendarDays size={16} />}>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-[13px] font-semibold text-muted">
-                תאריך יעד
+                {L('תאריך יעד', 'Due date')}
                 <input
                   id="due-date"
                   type="date"
@@ -228,7 +232,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
                 />
               </label>
               <label className="flex flex-col gap-1 text-[13px] font-semibold text-muted">
-                שעה
+                {L('שעה', 'Time')}
                 <input
                   id="due-time"
                   type="time"
@@ -249,13 +253,13 @@ export function ItemDetailScreen({ id }: { id: string }) {
                     onClick={() => up((i) => ({ task: { ...i.task!, dueDate: iso, reminderFired: false } }))}
                     className={`rounded-full px-3 py-1 text-[13px] font-semibold ${task.dueDate === iso ? 'bg-brand text-brand-ink' : 'bg-sunken text-muted hover:text-ink'}`}
                   >
-                    {d === 0 ? 'היום' : d === 1 ? 'מחר' : 'בעוד שבוע'}
+                    {d === 0 ? L('היום', 'Today') : d === 1 ? L('מחר', 'Tomorrow') : L('בעוד שבוע', 'In a week')}
                   </button>
                 );
               })}
               {task.dueDate && (
                 <button onClick={() => up((i) => ({ task: { ...i.task!, dueDate: undefined, dueTime: undefined, } }))} className="rounded-full px-3 py-1 text-[13px] font-semibold text-muted hover:text-danger">
-                  בלי תאריך
+                  {L('בלי תאריך', 'No date')}
                 </button>
               )}
             </div>
@@ -263,16 +267,16 @@ export function ItemDetailScreen({ id }: { id: string }) {
 
             <div className="mt-4">
               <div className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-muted">
-                <Flag size={14} /> חשיבות
+                <Flag size={14} /> {L('חשיבות', 'Priority')}
               </div>
               <Segmented<Priority>
                 size="sm"
                 value={task.priority}
                 onChange={(p) => up((i) => ({ task: { ...i.task!, priority: p } }))}
                 options={[
-                  { value: 'low', label: 'נמוכה' },
-                  { value: 'medium', label: 'רגילה' },
-                  { value: 'high', label: '🔥 גבוהה' },
+                  { value: 'low', label: L('נמוכה', 'Low') },
+                  { value: 'medium', label: L('רגילה', 'Normal') },
+                  { value: 'high', label: L('🔥 גבוהה', '🔥 High') },
                 ]}
               />
             </div>
@@ -280,15 +284,15 @@ export function ItemDetailScreen({ id }: { id: string }) {
               onClick={() => store.toggleTask(item.id)}
               className={`pressable mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-semibold ${task.done ? 'bg-sunken text-ink' : 'bg-done text-white'}`}
             >
-              <Check size={18} /> {task.done ? 'להחזיר למשימות פתוחות' : 'סימון כבוצע'}
+              <Check size={18} /> {task.done ? L('להחזיר למשימות פתוחות', 'Move back to open tasks') : L('סימון כבוצע', 'Mark as done')}
             </button>
-            {task.dueDate && !task.done && <p className="mt-2 text-center text-[13px] text-muted">יעד: {formatDue(task.dueDate)} {task.dueTime}</p>}
+            {task.dueDate && !task.done && <p className="mt-2 text-center text-[13px] text-muted">{L('יעד:', 'Due:')} {formatDue(task.dueDate)} {task.dueTime}</p>}
           </Block>
         )}
 
         {/* Shopping checklist */}
         {item.checklist ? (
-          <Block title="רשימת קניות" icon={<ListChecks size={16} />}>
+          <Block title={L('רשימת קניות', 'Shopping list')} icon={<ListChecks size={16} />}>
             <Checklist item={item} />
           </Block>
         ) : (
@@ -300,27 +304,27 @@ export function ItemDetailScreen({ id }: { id: string }) {
               }}
               className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl border border-dashed border-line font-semibold text-muted hover:text-ink"
             >
-              <ListChecks size={18} /> להפוך לרשימה עם סימונים
+              <ListChecks size={18} /> {L('להפוך לרשימה עם סימונים', 'Turn into a checklist')}
             </button>
           )
         )}
 
         {/* Original message */}
         <Block
-          title="ההודעה המקורית"
+          title={L('ההודעה המקורית', 'Original message')}
           action={
             <button
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(item.rawText);
-                  store.showToast({ text: 'הטקסט הועתק', emoji: '📋' });
+                  store.showToast({ text: L('הטקסט הועתק', 'Text copied'), emoji: '📋' });
                 } catch {
-                  store.showToast({ text: 'אפשר לסמן את הטקסט ולהעתיק ידנית', emoji: '✋' });
+                  store.showToast({ text: L('אפשר לסמן את הטקסט ולהעתיק ידנית', 'You can select the text and copy it manually'), emoji: '✋' });
                 }
               }}
               className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted hover:text-ink"
             >
-              <Copy size={13} /> העתקה
+              <Copy size={13} /> {L('העתקה', 'Copy')}
             </button>
           }
         >
@@ -333,7 +337,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
               className="w-full rounded-xl border border-brand/50 bg-bg p-3 text-[16px] leading-relaxed outline-none"
             />
           ) : (
-            <div className="rounded-2xl rounded-tr-md bg-[rgb(var(--c-shopping-bg))] px-4 py-3">
+            <div className="rounded-2xl rounded-ss-md bg-[rgb(var(--c-shopping-bg))] px-4 py-3">
               <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed">
                 {item.rawText.split(/(https?:\/\/\S+)/).map((part, i) =>
                   /^https?:\/\//.test(part) ? (
@@ -353,7 +357,7 @@ export function ItemDetailScreen({ id }: { id: string }) {
           {editing && (
             <div className="mt-3 flex gap-2">
               <button onClick={saveEdit} className="pressable h-10 rounded-xl bg-brand px-5 font-semibold text-brand-ink">
-                שמירה
+                {L('שמירה', 'Save')}
               </button>
               <button
                 onClick={() => {
@@ -363,39 +367,39 @@ export function ItemDetailScreen({ id }: { id: string }) {
                 }}
                 className="h-10 rounded-xl px-4 font-semibold text-muted hover:bg-sunken"
               >
-                ביטול
+                {L('ביטול', 'Cancel')}
               </button>
             </div>
           )}
-          {item.summary && !item.link && !editing && <p className="mt-3 text-[14px] text-muted">תקציר: {item.summary}</p>}
+          {item.summary && !item.link && !editing && <p className="mt-3 text-[14px] text-muted">{L('תקציר:', 'Summary:')} {item.summary}</p>}
           {item.url && !item.link && (
             <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand">
-              <ExternalLink size={14} /> פתיחת הקישור
+              <ExternalLink size={14} /> {L('פתיחת הקישור', 'Open link')}
             </a>
           )}
         </Block>
 
-        <Block title="תגיות">
+        <Block title={L('תגיות', 'Tags')}>
           <TagEditor tags={item.tags} onChange={(tags) => up({ tags })} />
         </Block>
 
-        <Block title="הערות אישיות">
+        <Block title={L('הערות אישיות', 'Personal notes')}>
           <textarea
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             onBlur={() => notes !== item.notes && up({ notes })}
             rows={3}
-            placeholder="למשל: דנה המליצה, לבדוק מחירים, להכין לשבת..."
+            placeholder={L('למשל: דנה המליצה, לבדוק מחירים, להכין לשבת...', 'e.g. Dana recommended it, check prices, make it for Saturday...')}
             className="w-full resize-none rounded-xl border border-line bg-bg p-3 text-[16px] leading-relaxed outline-none placeholder:text-faint focus:border-brand/60"
           />
-          {notes !== item.notes && <p className="mt-1 text-[12px] text-faint">נשמר אוטומטית כשיוצאים מהשדה</p>}
+          {notes !== item.notes && <p className="mt-1 text-[12px] text-faint">{L('נשמר אוטומטית כשיוצאים מהשדה', 'Saved automatically when you leave the box')}</p>}
         </Block>
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <button onClick={share} className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-semibold">
-            <Share2 size={17} /> שיתוף
+            <Share2 size={17} /> {L('שיתוף', 'Share')}
           </button>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
@@ -403,10 +407,10 @@ export function ItemDetailScreen({ id }: { id: string }) {
             rel="noopener noreferrer"
             className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-semibold"
           >
-            <MessageCircle size={17} /> לוואטסאפ
+            <MessageCircle size={17} /> {L('לוואטסאפ', 'To WhatsApp')}
           </a>
           <button onClick={() => setPicker(true)} className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-semibold">
-            <span aria-hidden>📂</span> העברה
+            <span aria-hidden>📂</span> {L('העברה', 'Move')}
           </button>
           {confirmDelete ? (
             <button
@@ -416,11 +420,11 @@ export function ItemDetailScreen({ id }: { id: string }) {
               }}
               className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl bg-danger font-semibold text-white"
             >
-              <Trash2 size={17} /> בטוח? למחוק
+              <Trash2 size={17} /> {L('בטוח? למחוק', 'Sure? Delete')}
             </button>
           ) : (
             <button onClick={() => setConfirmDelete(true)} className="pressable flex h-12 items-center justify-center gap-2 rounded-2xl border border-danger/30 bg-danger-soft font-semibold text-danger">
-              <Trash2 size={17} /> מחיקה
+              <Trash2 size={17} /> {L('מחיקה', 'Delete')}
             </button>
           )}
         </div>

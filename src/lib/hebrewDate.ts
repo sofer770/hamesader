@@ -1,5 +1,7 @@
 /** Today's date in Hebrew: Gregorian ("יום ראשון, 22 בנובמבר 2026") and Hebrew calendar ("י״ב בכסלו תשפ״ז"). */
 
+import { isEn } from './i18n';
+
 const ONES = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
 const TENS = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
 const HUNDREDS = ['', 'ק', 'ר', 'ש', 'ת', 'תק', 'תר', 'תש', 'תת', 'תתק'];
@@ -15,11 +17,14 @@ export function gematria(n: number): string {
 }
 
 export function gregorianToday(d = new Date()): string {
+  if (isEn) return new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
   return new Intl.DateTimeFormat('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 }
 
 export function hebrewToday(d = new Date()): string {
   try {
+    // English: "12 Kislev 5787"
+    if (isEn) return new Intl.DateTimeFormat('en-u-ca-hebrew', { day: 'numeric', month: 'long', year: 'numeric' }).format(d).replace(/\s*AM$/, '');
     const parts = new Intl.DateTimeFormat('he-IL-u-ca-hebrew-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }).formatToParts(d);
     const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
     const day = parseInt(get('day'), 10);

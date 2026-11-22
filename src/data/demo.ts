@@ -3,6 +3,7 @@ import { classifySync } from '../services/classifier/ruleBased';
 import { localLinkPreview } from '../services/linkPreview';
 import { addDays, toISODate } from '../lib/dates';
 import { uid } from '../services/storage';
+import { isEn } from '../lib/i18n';
 
 type Seed = Partial<Omit<Item, 'task'>> & {
   text: string;
@@ -153,8 +154,75 @@ const SEEDS: Seed[] = [
   { text: 'מספר פוליסה של ביטוח הדירה: 77-845120', ago: 30 * D, tags: ['בית'], category: 'other', title: 'מספר פוליסה - ביטוח דירה' },
 ];
 
+
+/** English version: one example per category. */
+const SEEDS_EN: Seed[] = [
+  {
+    text: 'Vegetable lentil lasagna with spinach for the weekend https://www.bbcgoodfood.com/recipes/vegetable-lentil-lasagne',
+    ago: 3 * H,
+    reviewed: false,
+    favorite: true,
+    category: 'recipes',
+    tags: ['family'],
+    title: 'Vegetable lentil lasagna with spinach',
+    link: {
+      url: 'https://www.bbcgoodfood.com/recipes/vegetable-lentil-lasagne',
+      domain: 'bbcgoodfood.com',
+      siteName: 'BBC Good Food',
+      title: 'Homemade vegetable lasagna with spinach and lentils',
+      description: 'Layers of tomato and lentil sauce, fresh spinach, roasted eggplant and herbs. Serves 8 and can be made a day ahead.',
+      cover: 'food',
+    },
+  },
+  {
+    text: 'Groceries: milk, eggs, bread, tomatoes, bananas, toilet paper',
+    ago: 55,
+    reviewed: false,
+    list: true,
+    category: 'shopping',
+    title: 'Grocery list',
+    checked: ['milk', 'bread'],
+    tags: ['home'],
+  },
+  {
+    text: 'Idea - a digital guide for small business owners: building an Instagram presence in 30 days',
+    ago: 8 * H,
+    favorite: true,
+    category: 'ideas',
+    title: 'Digital guide for business owners',
+    notes: 'Start with 5 short chapters, each with a practical task. Check a launch price of $25.',
+    tags: ['business'],
+  },
+  {
+    text: 'Book a dentist appointment for the kids',
+    ago: 2 * D + 6 * H,
+    category: 'tasks',
+    task: { dueIn: 0, priority: 'medium', reminderAt: 'today17' },
+    tags: ['family', 'health'],
+  },
+  {
+    text: 'Article about the benefits of a short walk after meals https://www.healthline.com/nutrition/walking-after-eating',
+    ago: 1 * D,
+    category: 'readlater',
+    tags: ['health'],
+    title: 'Why a short walk after meals helps',
+  },
+  { text: 'Cute cafe in the old town that Dana recommended, amazing carrot cake', ago: 4 * D, category: 'places', title: 'Cafe Dana recommended' },
+  { text: 'Gate code at my parents building: 4521#', ago: 20 * D, tags: ['family'], category: 'other', title: 'Gate code at my parents' },
+];
+
+export const HE_DEMO_TEXTS = new Set(SEEDS.map((s) => s.text));
+export const EN_DEMO_TEXTS = new Set(SEEDS_EN.map((s) => s.text));
+
+/** Language switched while the phone still holds only the other language's untouched examples: show this language's examples. */
+export function swapDemoLang(items: Item[]): Item[] {
+  const other = isEn ? HE_DEMO_TEXTS : EN_DEMO_TEXTS;
+  if (!items.length || !items.every((i) => other.has(i.rawText))) return items;
+  return buildDemoItems();
+}
+
 export function buildDemoItems(now = new Date()): Item[] {
-  return SEEDS.map((s) => {
+  return (isEn ? SEEDS_EN : SEEDS).map((s) => {
     const created = new Date(now.getTime() - s.ago * 60_000);
     const r = classifySync({ text: s.text, now: created });
     const category = s.category ?? (s.task ? 'tasks' : r.category);

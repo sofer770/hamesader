@@ -2,10 +2,11 @@ import { Check } from 'lucide-react';
 import type { CategoryId } from '../lib/types';
 import { CATEGORIES, toneBg } from '../lib/categories';
 import { Sheet } from './ui';
+import { L } from '../lib/i18n';
 
 export function CategoryPicker({ open, current, onPick, onClose }: { open: boolean; current: CategoryId; onPick: (c: CategoryId) => void; onClose: () => void }) {
   return (
-    <Sheet open={open} onClose={onClose} title="לאן זה שייך?">
+    <Sheet open={open} onClose={onClose} title={L('לאן זה שייך?', 'Where does this belong?')}>
       <ul className="grid grid-cols-1 gap-2 pb-2 sm:grid-cols-2">
         {CATEGORIES.map((c) => (
           <li key={c.id}>

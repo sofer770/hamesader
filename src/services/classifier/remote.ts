@@ -1,3 +1,4 @@
+import { L } from '../../lib/i18n';
 import type { ClassificationResult, ClassifyInput } from '../../lib/types';
 import type { Classifier } from './types';
 import { ruleBasedClassifier } from './ruleBased';
@@ -9,7 +10,7 @@ import { ruleBasedClassifier } from './ruleBased';
  */
 export function createRemoteClassifier(endpoint = '/api/classify', timeoutMs = 2500): Classifier {
   return {
-    name: 'AI (שרת)',
+    name: L('AI (שרת)', 'AI (server)'),
     async classify(input: ClassifyInput): Promise<ClassificationResult> {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), timeoutMs);

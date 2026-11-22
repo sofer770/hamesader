@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import type { LinkPreview } from '../lib/types';
+import { L } from '../lib/i18n';
 
 const COVER_EMOJI: Record<string, string> = { food: '🍝', map: '📍', news: '📰', video: '▶️', shop: '🛍️', social: '💬', web: '🌐' };
 
@@ -31,7 +32,7 @@ export function LinkCard({ link }: { link: LinkPreview }) {
         <h3 className="font-display text-[17px] font-semibold leading-snug">{link.title}</h3>
         {link.description && <p className="line-clamp-2 text-[15px] text-muted">{link.description}</p>}
         <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand">
-          פתיחת הקישור <ExternalLink size={14} />
+          {L('פתיחת הקישור', 'Open link')} <ExternalLink size={14} />
         </span>
       </div>
     </a>

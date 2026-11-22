@@ -4,24 +4,25 @@ import type { CategoryId } from '../lib/types';
 import { CATEGORY_BY_ID, toneBg, toneInk } from '../lib/categories';
 import { useNav } from '../state/nav';
 import logoUrl from '../assets/logo.webp';
+import { APP_NAME, L } from '../lib/i18n';
 
 export function Logo({ size = 36, className = '' }: { size?: number; className?: string }) {
-  return <img src={logoUrl} width={size} height={size} alt="המסדר" className={`rounded-xl ${className}`} style={{ width: size, height: size }} />;
+  return <img src={logoUrl} width={size} height={size} alt={APP_NAME} className={`rounded-xl ${className}`} style={{ width: size, height: size }} />;
 }
 
 export function Footer() {
   return (
     <footer className="mt-14 mb-4 flex flex-col items-center gap-0.5 text-center text-[15px] font-semibold leading-snug text-muted">
       <div className="mb-2 h-px w-16 bg-line" />
-      <p>נוצר ע"י יאיר גלעדי</p>
-      <p>המרכז לבריאות טבעית ©</p>
+      <p>{L('נוצר ע"י יאיר גלעדי', 'Created by Yair Giladi')}</p>
+      <p>{L('המרכז לבריאות טבעית ©', 'The Center for Natural Health ©')}</p>
       <p className="tabular">
         <a
-          href={`https://wa.me/972542135831?text=${encodeURIComponent("היי, אני רוצה לשאול שאלה")}`}
+          href={`https://wa.me/972542135831?text=${encodeURIComponent(L('היי, אני רוצה לשאול שאלה', "Hi, I'd like to ask a question"))}`}
           target="_blank"
           rel="noopener noreferrer"
           className="ltr font-bold text-[rgb(var(--done))] underline decoration-line underline-offset-4"
-          title="שליחת הודעה בוואטסאפ"
+          title={L('שליחת הודעה בוואטסאפ', 'Send a WhatsApp message')}
         >
           054-2135831
         </a>
@@ -39,7 +40,7 @@ export function ScreenHeader({ title, subtitle, actions, emoji }: { title: strin
   return (
     <header className="sticky top-0 z-20 -mx-4 mb-2 flex items-center gap-2 bg-bg/90 px-4 pb-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur-md lg:-mx-8 lg:px-8">
       {nav.canGoBack && (
-        <button onClick={nav.back} className="pressable -ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-sunken" aria-label="חזרה">
+        <button onClick={nav.back} className="pressable -ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-sunken" aria-label={L('חזרה', 'Back')}>
           <ArrowRight size={22} />
         </button>
       )}
@@ -91,7 +92,7 @@ export function TagChip({ tag, onClick, onRemove, selected }: { tag: string; onC
         #{tag}
       </button>
       {onRemove && (
-        <button onClick={onRemove} aria-label={`הסר תגית ${tag}`} className="-me-1 grid h-5 w-5 place-items-center rounded-full hover:bg-sunken">
+        <button onClick={onRemove} aria-label={L(`הסר תגית ${tag}`, `Remove tag ${tag}`)} className="-me-1 grid h-5 w-5 place-items-center rounded-full hover:bg-sunken">
           <X size={12} />
         </button>
       )}

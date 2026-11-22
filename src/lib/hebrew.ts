@@ -25,6 +25,15 @@ const PREFIXES = ['וכש', 'ושה', 'וה', 'וב', 'ול', 'ומ', 'וש', '�
 /** Returns the token plus plausible stems with Hebrew prefixes / simple plural suffixes removed. */
 export function variants(token: string): string[] {
   const out = new Set<string>([token]);
+  // English: simple plural / verb endings (recipes -> recipe, buying -> buy, cookies -> cooky/cookie)
+  if (/^[a-z]+$/.test(token)) {
+    if (token.length > 4 && token.endsWith('ies')) out.add(token.slice(0, -3) + 'y');
+    if (token.length > 4 && token.endsWith('es')) out.add(token.slice(0, -2));
+    if (token.length > 3 && token.endsWith('s') && !token.endsWith('ss')) out.add(token.slice(0, -1));
+    if (token.length > 5 && token.endsWith('ing')) out.add(token.slice(0, -3));
+    if (token.length > 4 && token.endsWith('ed')) out.add(token.slice(0, -2));
+    return [...out];
+  }
   for (const p of PREFIXES) {
     if (token.startsWith(p) && token.length - p.length >= 2) out.add(token.slice(p.length));
   }

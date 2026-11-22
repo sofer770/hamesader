@@ -2,7 +2,6 @@ import { formatReminder, isReminderPending } from '../lib/reminders';
 import { useMemo, useState } from 'react';
 import { ChevronLeft, Search } from 'lucide-react';
 import { useStore } from '../state/store';
-import { initials } from '../lib/initials';
 import { gregorianToday, hebrewToday } from '../lib/hebrewDate';
 import { useNav } from '../state/nav';
 import { CATEGORIES, toneBg, toneInk } from '../lib/categories';
@@ -11,20 +10,21 @@ import { ItemList } from '../components/ItemCard';
 import { InstallButton, InstallCard } from '../components/InstallCard';
 import { EmptyState, Footer, LinkButton, Logo, SectionTitle, Segmented } from '../components/ui';
 import type { ContentType } from '../lib/types';
+import { isEn, L, setLang } from '../lib/i18n';
 
 function greeting(h: number) {
-  if (h >= 5 && h < 12) return 'בוקר טוב';
-  if (h >= 12 && h < 17) return 'צהריים טובים';
-  if (h >= 17 && h < 22) return 'ערב טוב';
-  return 'לילה טוב';
+  if (h >= 5 && h < 12) return L('בוקר טוב', 'Good morning');
+  if (h >= 12 && h < 17) return L('צהריים טובים', 'Good afternoon');
+  if (h >= 17 && h < 22) return L('ערב טוב', 'Good evening');
+  return L('לילה טוב', 'Good night');
 }
 
 const QUICK: { hint: ContentType; label: string; emoji: string }[] = [
-  { hint: 'link', label: 'קישור', emoji: '🔗' },
-  { hint: 'task', label: 'משימה', emoji: '✅' },
-  { hint: 'idea', label: 'רעיון', emoji: '💡' },
-  { hint: 'list', label: 'רשימה', emoji: '🛒' },
-  { hint: 'image', label: 'תמונה', emoji: '🖼️' },
+  { hint: 'link', label: L('קישור', 'Link'), emoji: '🔗' },
+  { hint: 'task', label: L('משימה', 'Task'), emoji: '✅' },
+  { hint: 'idea', label: L('רעיון', 'Idea'), emoji: '💡' },
+  { hint: 'list', label: L('רשימה', 'List'), emoji: '🛒' },
+  { hint: 'image', label: L('תמונה', 'Image'), emoji: '🖼️' },
 ];
 
 export function HomeScreen() {
@@ -69,19 +69,22 @@ export function HomeScreen() {
           </p>
           <p className="text-[15px] text-muted">
             {todayCount > 0
-              ? `${todayCount === 1 ? 'משימה אחת מחכה' : `${todayCount} משימות מחכות`} להיום`
+              ? todayCount === 1
+                ? L('משימה אחת מחכה להיום', '1 task waiting for today')
+                : L(`${todayCount} משימות מחכות להיום`, `${todayCount} tasks waiting for today`)
               : items.length
-                ? 'הכל מסודר. מה שומרים היום?'
-                : 'בואו נתחיל לסדר'}
+                ? L('הכל מסודר. מה שומרים היום?', 'All sorted. What are we saving today?')
+                : L('בואו נתחיל לסדר', "Let's get organized")}
           </p>
           <InstallButton />
         </div>
         <button
-          onClick={() => nav.switchTab('profile')}
-          aria-label="פרופיל"
-          className="pressable grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-soft font-display text-lg font-semibold text-brand"
+          onClick={() => setLang(isEn ? 'he' : 'en')}
+          aria-label={isEn ? 'Switch to Hebrew' : 'Switch to English'}
+          title={isEn ? 'עברית' : 'English'}
+          className="pressable grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-soft font-display text-[16px] font-bold text-brand"
         >
-          {initials(settings.name)}
+          {isEn ? 'עב' : 'En'}
         </button>
       </div>
 
@@ -91,7 +94,7 @@ export function HomeScreen() {
         className="pressable mt-5 flex h-14 w-full items-center gap-3 rounded-2xl border border-line bg-surface px-4 text-start text-[16px] text-faint shadow-soft hover:border-brand/40"
       >
         <Search size={20} className="text-muted" />
-        <span className="truncate">חפשו כל דבר... "המתכון לעוגת שוקולד"</span>
+        <span className="truncate">{L('חפשו כל דבר... "המתכון לעוגת שוקולד"', 'Search anything... "the chocolate cake recipe"')}</span>
       </button>
 
       <div className="mt-3">
@@ -103,8 +106,8 @@ export function HomeScreen() {
         <button onClick={() => nav.openComposer()} className="pressable flex w-full items-center gap-3 rounded-2xl bg-white/15 px-4 py-3 text-start hover:bg-white/20">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/90 text-xl font-bold text-[rgb(58_47_134)]">+</span>
           <span>
-            <span className="block font-display text-[17px] font-semibold">הוסף משהו חדש</span>
-            <span className="block text-[14px] opacity-80">שלחו לכאן כמו להודעות לעצמי. אנחנו נסדר.</span>
+            <span className="block font-display text-[17px] font-semibold">{L('הוסף משהו חדש', 'Add something new')}</span>
+            <span className="block text-[14px] opacity-80">{L('שלחו לכאן כמו להודעות לעצמי. אנחנו נסדר.', "Send it here like a message to yourself. We'll sort it.")}</span>
           </span>
         </button>
         <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
@@ -132,9 +135,9 @@ export function HomeScreen() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-semibold">
-              {inbox.length === 1 ? 'פריט חדש בתיבת הקליטה' : `${inbox.length} פריטים חדשים בתיבת הקליטה`}
+              {inbox.length === 1 ? L('פריט חדש בתיבת הקליטה', '1 new item in your inbox') : L(`${inbox.length} פריטים חדשים בתיבת הקליטה`, `${inbox.length} new items in your inbox`)}
             </span>
-            <span className="block text-[14px] text-muted">כבר מיינו אותם בשבילך. רק לאשר במבט.</span>
+            <span className="block text-[14px] text-muted">{L('כבר מיינו אותם בשבילך. רק לאשר במבט.', 'Already sorted for you. Just confirm at a glance.')}</span>
           </span>
           <ChevronLeft size={20} className="text-brand" />
         </button>
@@ -144,7 +147,7 @@ export function HomeScreen() {
       {reminders.length > 0 && (
         <div className="mt-4 rounded-2xl border border-line/70 bg-surface p-3.5 shadow-soft">
           <div className="mb-2 flex items-center gap-2 font-semibold">
-            <span aria-hidden>⏰</span> תזכורות קרובות
+            <span aria-hidden>⏰</span> {L('תזכורות קרובות', 'Upcoming reminders')}
           </div>
           <ul className="flex flex-col">
             {reminders.slice(0, 3).map((r) => (
@@ -160,7 +163,7 @@ export function HomeScreen() {
       )}
 
       {/* Categories */}
-      <SectionTitle action={<LinkButton onClick={() => nav.switchTab('categories')}>הכל</LinkButton>}>הקטגוריות שלך</SectionTitle>
+      <SectionTitle action={<LinkButton onClick={() => nav.switchTab('categories')}>{L('הכל', 'All')}</LinkButton>}>{L('הקטגוריות שלך', 'Your categories')}</SectionTitle>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {CATEGORIES.map((c) => (
           <button
@@ -175,7 +178,7 @@ export function HomeScreen() {
             <span className="w-full">
               <span className="block font-semibold text-ink">{c.name}</span>
               <span className="tabular block text-[13px] font-semibold" style={toneInk(c.id)}>
-                {counts[c.id] ? `${counts[c.id]} פריטים` : 'ריק בינתיים'}
+                {counts[c.id] ? (counts[c.id] === 1 ? L('פריט אחד', '1 item') : L(`${counts[c.id]} פריטים`, `${counts[c.id]} items`)) : L('ריק בינתיים', 'Empty for now')}
               </span>
             </span>
           </button>
@@ -185,30 +188,30 @@ export function HomeScreen() {
             ⭐
           </span>
           <span>
-            <span className="block font-semibold">מועדפים</span>
-            <span className="tabular block text-[13px] font-semibold text-warn">{favorites.length} פריטים</span>
+            <span className="block font-semibold">{L('מועדפים', 'Favorites')}</span>
+            <span className="tabular block text-[13px] font-semibold text-warn">{favorites.length === 1 ? L('פריט אחד', '1 item') : L(`${favorites.length} פריטים`, `${favorites.length} items`)}</span>
           </span>
         </button>
       </div>
 
       {/* Pending tasks */}
-      <SectionTitle action={<LinkButton onClick={() => nav.go({ name: 'category', id: 'tasks' })}>כל המשימות ({openTasks})</LinkButton>}>מחכה לטיפול</SectionTitle>
+      <SectionTitle action={<LinkButton onClick={() => nav.go({ name: 'category', id: 'tasks' })}>{L(`כל המשימות (${openTasks})`, `All tasks (${openTasks})`)}</LinkButton>}>{L('מחכה לטיפול', 'Needs attention')}</SectionTitle>
       {pending.length ? (
         <ItemList items={pending.slice(0, 4)} showCategory={false} />
       ) : (
-        <EmptyState emoji="🌿" title="אין משימות דחופות" text="אין כרגע משימות להיום או למחר. אפשר לנשום." />
+        <EmptyState emoji="🌿" title={L('אין משימות דחופות', 'No urgent tasks')} text={L('אין כרגע משימות להיום או למחר. אפשר לנשום.', 'Nothing due today or tomorrow. Time to breathe.')} />
       )}
 
       {/* Recent / favorites */}
-      <SectionTitle>נשמר לאחרונה</SectionTitle>
+      <SectionTitle>{L('נשמר לאחרונה', 'Recently saved')}</SectionTitle>
       <div className="mb-3 max-w-xs">
         <Segmented
           size="sm"
           value={recentMode}
           onChange={setRecentMode}
           options={[
-            { value: 'recent', label: 'אחרונים' },
-            { value: 'favorites', label: '⭐ מועדפים', count: favorites.length },
+            { value: 'recent', label: L('אחרונים', 'Recent') },
+            { value: 'favorites', label: L('⭐ מועדפים', '⭐ Favorites'), count: favorites.length },
           ]}
         />
       </div>
@@ -217,8 +220,8 @@ export function HomeScreen() {
       ) : (
         <EmptyState
           emoji={recentMode === 'favorites' ? '⭐' : '📭'}
-          title={recentMode === 'favorites' ? 'עוד אין מועדפים' : 'עוד לא שמרת כלום'}
-          text={recentMode === 'favorites' ? 'לחיצה על הכוכב בכל פריט תשמור אותו כאן.' : 'לחצו על הפלוס ושלחו את הדבר הראשון.'}
+          title={recentMode === 'favorites' ? L('עוד אין מועדפים', 'No favorites yet') : L('עוד לא שמרת כלום', "You haven't saved anything yet")}
+          text={recentMode === 'favorites' ? L('לחיצה על הכוכב בכל פריט תשמור אותו כאן.', 'Tap the star on any item to keep it here.') : L('לחצו על הפלוס ושלחו את הדבר הראשון.', 'Tap the plus and send the first thing.')}
         />
       )}
       <Footer />

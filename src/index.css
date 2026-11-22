@@ -142,3 +142,11 @@ mark.hl {
   25% { transform: rotate(-14deg); }
   75% { transform: rotate(14deg); }
 }
+
+/* English (left-to-right): point "back" and "forward" arrows the other way */
+html[dir='ltr'] .lucide-arrow-right,
+html[dir='ltr'] .lucide-chevron-left,
+html[dir='ltr'] .lucide-chevron-right,
+html[dir='ltr'] .lucide-arrow-left {
+  transform: scaleX(-1);
+}

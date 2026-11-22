@@ -1,8 +1,9 @@
+import { isEn, L } from '../../lib/i18n';
 import type { CategoryId, ClassificationResult, ClassifyInput, ContentType } from '../../lib/types';
 import { extractUrl, fuzzyWordMatch, normalize, tokenize, URL_RE } from '../../lib/hebrew';
 import { extractDate } from '../../lib/dates';
 import { lookupSite, titleFromPath } from '../linkPreview';
-import { CATEGORY_KEYWORDS, CATEGORY_PHRASES, TAG_KEYWORDS, TASK_LEADS } from './keywords';
+import { CATEGORY_KEYWORDS, CATEGORY_PHRASES, TAG_KEYWORDS, TAG_KEYWORDS_EN, TASK_LEADS, TASK_LEADS_EN } from './keywords';
 import type { Classifier } from './types';
 
 type Scores = Record<CategoryId, number>;
@@ -10,19 +11,21 @@ type Scores = Record<CategoryId, number>;
 const emptyScores = (): Scores => ({ recipes: 0, shopping: 0, ideas: 0, tasks: 0, readlater: 0, places: 0, other: 0.6 });
 
 const LIST_PREFIX = /^\s*(רשימת קניות|קניות|לקנות|צריך לקנות|לסופר|מה חסר)\s*(ב[א-ת]+|ל[א-ת]+)?\s*[:\-–]?\s*/;
+const LIST_PREFIX_EN = /^\s*(shopping list|grocery list|groceries|shopping|need to buy|to buy|buy|get)\s*(at [a-z]+|from [a-z]+|for [a-z]+)?\s*[:\-–]?\s*/i;
 
 /** "לקנות חלב, ביצים ולחם" -> ["חלב", "ביצים", "לחם"] */
 export function parseListItems(text: string): string[] {
-  const body = text.replace(URL_RE, ' ').replace(LIST_PREFIX, '');
+  const body = text.replace(URL_RE, ' ').replace(LIST_PREFIX, '').replace(LIST_PREFIX_EN, '');
   let parts = body.split(/\n|,|;|،|•|\*/).map((s) => s.trim()).filter(Boolean);
-  if (parts.length === 1) parts = parts[0].split(/\s+ו-?(?=[א-ת])/);
+  if (parts.length === 1) parts = parts[0].split(/\s+ו-?(?=[א-ת])|\s+and\s+/i);
   const items = parts
-    .flatMap((p) => p.split(/\s+ו-?(?=[א-ת]{2,})/))
+    .flatMap((p) => p.split(/\s+ו-?(?=[א-ת]{2,})|^and\s+|\s+and\s+/i))
     .map((p) =>
       p
         .replace(/^[-–•*\d.)\s]+/, '')
         .replace(/^ו-?(?=[א-ת]{2,})/, '')
         .replace(/^(גם|עוד)\s+/, '')
+        .replace(/^(and|also|some|more)\s+/i, '')
         .trim(),
     )
     .filter((p) => p.length >= 2 && p.length <= 40);
@@ -33,6 +36,8 @@ function cleanTitle(s: string, max = 56): string {
   let t = s.replace(URL_RE, '').replace(/\s+/g, ' ').trim();
   t = t.replace(/^(רעיון|רעיונות)\s*[:\-–]\s*/, (m) => (m.startsWith('רעיונות') ? 'רעיונות ' : ''));
   t = t.replace(/^(תזכורת|לא לשכוח|חשוב|משימה)\s*[:\-–]?\s*/, '');
+  t = t.replace(/^(idea|reminder|todo|to do|task|note|important)\s*[:\-–]\s*/i, '');
+  t = t.replace(/^(don'?t forget( to)?|remind me( to)?)\s+/i, '');
   t = t.replace(/^[-–:\s]+|[-–:\s]+$/g, '');
   if (t.length > max) {
     const cut = t.slice(0, max);
@@ -45,7 +50,7 @@ function detectTags(text: string): string[] {
   const n = ' ' + normalize(text).replace(/בית (קפה|ספר|מרקחת|כנסת|חולים)/g, '$1') + ' ';
   const tokens = n.trim().split(' ');
   const tags: string[] = [];
-  for (const [tag, words] of Object.entries(TAG_KEYWORDS)) {
+  for (const [tag, words] of Object.entries(isEn ? TAG_KEYWORDS_EN : TAG_KEYWORDS)) {
     const hit = words.some((w) => {
       const nw = normalize(w);
       return nw.includes(' ') ? n.includes(' ' + nw) : tokens.some((tk) => fuzzyWordMatch(tk, nw) >= 0.85);
@@ -69,7 +74,7 @@ function urlPathSignals(url: string, scores: Scores) {
 }
 
 export const ruleBasedClassifier: Classifier = {
-  name: 'מיון מקומי חכם',
+  name: L('מיון מקומי חכם', 'Smart on-device sorting'),
   async classify(input: ClassifyInput): Promise<ClassificationResult> {
     return classifySync(input);
   },
@@ -100,7 +105,7 @@ export function classifySync({ text, hint, hasImage, now = new Date() }: Classif
   }
   // 3. structure
   const { date, time } = extractDate(textOnly, now);
-  if (TASK_LEADS.test(textOnly)) scores.tasks += 2.5;
+  if (TASK_LEADS.test(textOnly) || TASK_LEADS_EN.test(textOnly)) scores.tasks += 2.5;
   if (date) scores.tasks += 2.5;
   const listItems = parseListItems(raw);
   const looksLikeList = listItems.length >= 3 && listItems.every((i) => i.split(' ').length <= 4);
@@ -150,24 +155,27 @@ export function classifySync({ text, hint, hasImage, now = new Date() }: Classif
   let title: string;
   if (isShoppingList) {
     const head = listItems.slice(0, 2).join(', ');
-    title =
-      listItems.length > 3
+    title = isEn
+      ? listItems.length > 3
+        ? `Shopping: ${head} and ${listItems.length - 2} more`
+        : `Shopping: ${listItems.slice(0, -1).join(', ')} and ${listItems[listItems.length - 1]}`
+      : listItems.length > 3
         ? `קניות: ${head} ועוד ${listItems.length - 2}`
         : `קניות: ${listItems.slice(0, -1).join(', ')} ו${listItems[listItems.length - 1]}`;
   } else if (textOnly.length >= 3) {
     title = cleanTitle(textOnly.split('\n')[0]);
   } else if (url) {
-    title = linkTitle ?? 'קישור ששמרת';
+    title = linkTitle ?? L('קישור ששמרת', 'A link you saved');
   } else if (hasImage) {
-    title = 'צילום מסך';
+    title = L('צילום מסך', 'Screenshot');
   } else {
-    title = cleanTitle(raw) || 'פריט חדש';
+    title = cleanTitle(raw) || L('פריט חדש', 'New item');
   }
   if (title.length > 0) title = title.charAt(0).toUpperCase() + title.slice(1);
 
   let summary = '';
-  if (isShoppingList) summary = `${listItems.length} מוצרים ברשימה`;
-  else if (url) summary = `קישור מ-${lookupSite(url)?.name ?? (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } })()}`;
+  if (isShoppingList) summary = L(`${listItems.length} מוצרים ברשימה`, `${listItems.length} items on the list`);
+  else if (url) summary = `${L('קישור מ-', 'Link from ')}${lookupSite(url)?.name ?? (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } })()}`;
   else if (textOnly.length > title.length + 10) summary = textOnly.slice(0, 140);
 
   return {

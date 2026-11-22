@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import type { CategoryId, ChecklistEntry, ClassificationResult, Item } from '../lib/types';
 import { localRepository, settingsStore, uid, type Settings } from '../services/storage';
-import { buildDemoItems, upgradeDemo } from '../data/demo';
+import { buildDemoItems, swapDemoLang, upgradeDemo } from '../data/demo';
 import { localLinkPreview } from '../services/linkPreview';
 import { SUGGESTED_TAGS } from '../lib/categories';
+import { L } from '../lib/i18n';
 
 type Action =
   | { type: 'set'; items: Item[] }
@@ -64,7 +65,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [items, dispatch] = useReducer(reducer, undefined, () => {
     const saved = localRepository.load();
     if (saved && settingsStore.load().seeded)
-      return upgradeDemo(saved).map((i) =>
+      return swapDemoLang(upgradeDemo(saved)).map((i) =>
         i.task?.reminderAt && !i.reminderAt
           ? { ...i, reminderAt: i.task.reminderAt, reminderFired: i.task.reminderFired, task: { ...i.task, reminderAt: undefined, reminderFired: undefined } }
           : i,
@@ -136,7 +137,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         image: extra?.image,
       };
       // "תזכיר לי מחר ב-9..." -> set the reminder automatically
-      if (/תזכ(י|ו)ר|להזכיר/.test(raw) && r.dueDate) {
+      if (/תזכ(י|ו)ר|להזכיר|\bremind/i.test(raw) && r.dueDate) {
         const at = new Date(`${r.dueDate}T${r.dueTime ?? '09:00'}`);
         if (at.getTime() > Date.now()) {
           item.reminderAt = at.toISOString();
@@ -152,12 +153,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const item = itemsRef.current[index];
       if (!item) return;
       dispatch({ type: 'remove', id });
-      showToast({ text: 'הפריט נמחק', emoji: '🗑️', action: { label: 'ביטול', run: () => dispatch({ type: 'restore', item, index }) } });
+      showToast({ text: L('הפריט נמחק', 'Item deleted'), emoji: '🗑️', action: { label: L('ביטול', 'Undo'), run: () => dispatch({ type: 'restore', item, index }) } });
     },
     toggleFavorite(id) {
       const it = itemsRef.current.find((i) => i.id === id);
       dispatch({ type: 'update', id, patch: (i) => ({ favorite: !i.favorite }) });
-      if (it) showToast({ text: it.favorite ? 'הוסר מהמועדפים' : 'נוסף למועדפים', emoji: it.favorite ? '🤍' : '⭐' });
+      if (it) showToast({ text: it.favorite ? L('הוסר מהמועדפים', 'Removed from favorites') : L('נוסף למועדפים', 'Added to favorites'), emoji: it.favorite ? '🤍' : '⭐' });
     },
     toggleTask(id) {
       dispatch({
@@ -175,11 +176,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     resetDemo() {
       dispatch({ type: 'set', items: buildDemoItems() });
-      showToast({ text: 'נתוני הדוגמה נטענו מחדש', emoji: '✨' });
+      showToast({ text: L('נתוני הדוגמה נטענו מחדש', 'Sample data reloaded'), emoji: '✨' });
     },
     clearAll() {
       dispatch({ type: 'set', items: [] });
-      showToast({ text: 'כל הפריטים נמחקו. אפשר להתחיל מחדש', emoji: '🧹' });
+      showToast({ text: L('כל הפריטים נמחקו. אפשר להתחיל מחדש', 'All items deleted. You can start fresh'), emoji: '🧹' });
     },
   };
 

@@ -8,14 +8,15 @@ import { fileToDataUrl } from '../lib/image';
 import { useStore } from '../state/store';
 import { useNav } from '../state/nav';
 import { Sheet } from './ui';
+import { L } from '../lib/i18n';
 
 const TYPES: { value: ContentType; label: string; emoji: string; placeholder: string }[] = [
-  { value: 'text', label: 'טקסט', emoji: '✍️', placeholder: 'מה רוצים לשמור? קישור, רשימה, מחשבה, הכל הולך' },
-  { value: 'link', label: 'קישור', emoji: '🔗', placeholder: 'הדביקו כאן קישור, ואפשר להוסיף כמה מילים עליו' },
-  { value: 'task', label: 'משימה', emoji: '✅', placeholder: 'למשל: לקבוע תור לרופא ביום ראשון' },
-  { value: 'idea', label: 'רעיון', emoji: '💡', placeholder: 'למשל: רעיון לפתוח פודקאסט על עסקים' },
-  { value: 'list', label: 'רשימה', emoji: '🛒', placeholder: 'למשל: חלב, ביצים, לחם ועגבניות' },
-  { value: 'image', label: 'תמונה', emoji: '🖼️', placeholder: 'מה יש בתמונה? (לא חובה)' },
+  { value: 'text', label: L('טקסט', 'Text'), emoji: '✍️', placeholder: L('מה רוצים לשמור? קישור, רשימה, מחשבה, הכל הולך', 'What do you want to save? A link, a list, a thought, anything goes') },
+  { value: 'link', label: L('קישור', 'Link'), emoji: '🔗', placeholder: L('הדביקו כאן קישור, ואפשר להוסיף כמה מילים עליו', 'Paste a link here, and add a few words about it if you like') },
+  { value: 'task', label: L('משימה', 'Task'), emoji: '✅', placeholder: L('למשל: לקבוע תור לרופא ביום ראשון', "e.g. Book a doctor's appointment on Sunday") },
+  { value: 'idea', label: L('רעיון', 'Idea'), emoji: '💡', placeholder: L('למשל: רעיון לפתוח פודקאסט על עסקים', 'e.g. Idea: start a podcast about small businesses') },
+  { value: 'list', label: L('רשימה', 'List'), emoji: '🛒', placeholder: L('למשל: חלב, ביצים, לחם ועגבניות', 'e.g. Bread, tomatoes, lentils and bananas') },
+  { value: 'image', label: L('תמונה', 'Image'), emoji: '🖼️', placeholder: L('מה יש בתמונה? (לא חובה)', "What's in the picture? (optional)") },
 ];
 
 export function Composer() {
@@ -48,7 +49,7 @@ export function Composer() {
     if (!open) return;
     if (!text.trim() && !image) return setResult(null);
     const t = window.setTimeout(async () => {
-      const r = await classifier.classify({ text: text || 'צילום מסך', hint: hint === 'text' || hint === 'link' ? undefined : hint, hasImage: !!image });
+      const r = await classifier.classify({ text: text || L('צילום מסך', 'Screenshot'), hint: hint === 'text' || hint === 'link' ? undefined : hint, hasImage: !!image });
       setResult(r);
     }, 220);
     return () => window.clearTimeout(t);
@@ -67,12 +68,12 @@ export function Composer() {
   async function save() {
     if (!canSave || !result) return;
     setSaving(true);
-    const item = await store.addFromClassification(text.trim() || 'צילום מסך', result, { image, category: picked ?? undefined });
+    const item = await store.addFromClassification(text.trim() || L('צילום מסך', 'Screenshot'), result, { image, category: picked ?? undefined });
     setSaving(false);
     nav.closeComposer();
     nav.markFiled(item.category);
     const c = CATEGORY_BY_ID[item.category];
-    store.showToast({ text: `נשמר ב${c.name}`, emoji: c.emoji, action: { label: 'לפריט', run: () => nav.go({ name: 'item', id: item.id }) } });
+    store.showToast({ text: L(`נשמר ב${c.name}`, `Saved to ${c.name}`), emoji: c.emoji, action: { label: L('לפריט', 'View'), run: () => nav.go({ name: 'item', id: item.id }) } });
   }
 
   async function paste() {
@@ -82,7 +83,7 @@ export function Composer() {
       taRef.current?.focus();
     } catch {
       taRef.current?.focus();
-      store.showToast({ text: 'לחיצה ארוכה בשדה ואז "הדבק"', emoji: '📋' });
+      store.showToast({ text: L('לחיצה ארוכה בשדה ואז "הדבק"', 'Long-press the box, then "Paste"'), emoji: '📋' });
     }
   }
 
@@ -92,7 +93,7 @@ export function Composer() {
       setImage(await fileToDataUrl(f));
       setHint('image');
     } catch {
-      store.showToast({ text: 'לא הצלחנו לקרוא את התמונה. נסו קובץ JPG או PNG', emoji: '⚠️' });
+      store.showToast({ text: L('לא הצלחנו לקרוא את התמונה. נסו קובץ JPG או PNG', "We couldn't read that image. Try a JPG or PNG file"), emoji: '⚠️' });
     }
   }
 
@@ -100,9 +101,9 @@ export function Composer() {
     <Sheet open={open} onClose={nav.closeComposer} labelledBy="composer-title">
       <div className="mb-3 flex items-center justify-between">
         <h2 id="composer-title" className="font-display text-xl font-semibold">
-          מה שומרים?
+          {L('מה שומרים?', 'What are we saving?')}
         </h2>
-        <button onClick={nav.closeComposer} className="pressable grid h-9 w-9 place-items-center rounded-full bg-sunken" aria-label="סגירה">
+        <button onClick={nav.closeComposer} className="pressable grid h-9 w-9 place-items-center rounded-full bg-sunken" aria-label={L('סגירה', 'Close')}>
           <X size={18} />
         </button>
       </div>
@@ -130,8 +131,8 @@ export function Composer() {
       <div className="rounded-3xl border border-line bg-bg p-3 focus-within:border-brand/60">
         {image && (
           <div className="relative mb-3 inline-block">
-            <img src={image} alt="התמונה שנבחרה" className="max-h-40 rounded-2xl" />
-            <button onClick={() => setImage(undefined)} className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-ink text-bg shadow" aria-label="הסר תמונה">
+            <img src={image} alt={L('התמונה שנבחרה', 'The chosen image')} className="max-h-40 rounded-2xl" />
+            <button onClick={() => setImage(undefined)} className="absolute -end-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-ink text-bg shadow" aria-label={L('הסר תמונה', 'Remove image')}>
               <X size={14} />
             </button>
           </div>
@@ -157,10 +158,10 @@ export function Composer() {
         />
         <div className="mt-2 flex items-center gap-1 border-t border-line pt-2">
           <button onClick={paste} className="pressable inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold text-muted hover:bg-sunken">
-            <ClipboardPaste size={15} /> הדבקה
+            <ClipboardPaste size={15} /> {L('הדבקה', 'Paste')}
           </button>
           <button onClick={() => fileRef.current?.click()} className="pressable inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold text-muted hover:bg-sunken">
-            <ImagePlus size={15} /> תמונה או צילום מסך
+            <ImagePlus size={15} /> {L('תמונה או צילום מסך', 'Image or screenshot')}
           </button>
           <input ref={fileRef} id="composer-file" type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         </div>
@@ -172,9 +173,9 @@ export function Composer() {
           <div className="animate-fade-in">
             <div className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold text-muted">
               <Sparkles size={14} className="text-brand" />
-              {picked ? 'יישמר ב:' : result.confidence >= 0.75 ? 'נראה שזה שייך ל:' : 'לא בטוחים, זה נראה כמו:'}
+              {picked ? L('יישמר ב:', 'Will be saved to:') : result.confidence >= 0.75 ? L('נראה שזה שייך ל:', 'Looks like it belongs in:') : L('לא בטוחים, זה נראה כמו:', 'Not sure, it looks like:')}
               {!picked && (
-                <span className="tabular rounded-full bg-sunken px-1.5 text-[11px] text-faint" title="רמת ביטחון">
+                <span className="tabular rounded-full bg-sunken px-1.5 text-[11px] text-faint" title={L('רמת ביטחון', 'Confidence')}>
                   {Math.round(result.confidence * 100)}%
                 </span>
               )}
@@ -199,19 +200,19 @@ export function Composer() {
             </div>
             <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted">
               <span>
-                כותרת: <b className="font-semibold text-ink">{result.title}</b>
+                {L('כותרת:', 'Title:')} <b className="font-semibold text-ink">{result.title}</b>
               </span>
               {category === 'tasks' && result.dueDate && (
                 <span className="inline-flex items-center gap-1">
                   <CalendarDays size={13} /> {formatDue(result.dueDate)} {result.dueTime}
                 </span>
               )}
-              {category === 'shopping' && result.listItems.length >= 2 && <span>🛒 {result.listItems.length} מוצרים יהפכו לרשימה</span>}
+              {category === 'shopping' && result.listItems.length >= 2 && <span>🛒 {L(`${result.listItems.length} מוצרים יהפכו לרשימה`, `${result.listItems.length} items will become a checklist`)}</span>}
               {result.tags.length > 0 && <span>{result.tags.map((t) => '#' + t).join(' ')}</span>}
             </div>
           </div>
         ) : (
-          <p className="pt-2 text-[14px] text-faint">כתבו או הדביקו משהו, והמסדר כבר יציע לאן הוא שייך.</p>
+          <p className="pt-2 text-[14px] text-faint">{L('כתבו או הדביקו משהו, והמסדר כבר יציע לאן הוא שייך.', 'Type or paste something, and Hamesader will suggest where it belongs.')}</p>
         )}
       </div>
 
@@ -220,9 +221,9 @@ export function Composer() {
         disabled={!canSave}
         className="pressable mt-3 h-14 w-full rounded-2xl bg-brand font-display text-[17px] font-semibold text-brand-ink shadow-fab transition-opacity disabled:opacity-40 disabled:shadow-none"
       >
-        {category ? `שמור ב${CATEGORY_BY_ID[category].name}` : 'שמור'}
+        {category ? L(`שמור ב${CATEGORY_BY_ID[category].name}`, `Save to ${CATEGORY_BY_ID[category].name}`) : L('שמור', 'Save')}
       </button>
-      <p className="mt-2 hidden text-center text-[12px] text-faint sm:block">Ctrl + Enter לשמירה מהירה</p>
+      <p className="mt-2 hidden text-center text-[12px] text-faint sm:block">{L('Ctrl + Enter לשמירה מהירה', 'Ctrl + Enter to save quickly')}</p>
     </Sheet>
   );
 }

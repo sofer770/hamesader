@@ -7,6 +7,7 @@ import { useStore } from '../state/store';
 import { useNav } from '../state/nav';
 import { Highlight } from './ui';
 import { LinkCover } from './LinkCard';
+import { L } from '../lib/i18n';
 
 export function dueTone(dueDate?: string, done?: boolean): string {
   if (!dueDate || done) return 'text-muted';
@@ -25,7 +26,7 @@ export function TaskCheck({ item, size = 26 }: { item: Item; size?: number }) {
         e.stopPropagation();
         toggleTask(item.id);
       }}
-      aria-label={done ? 'סמן כלא בוצע' : 'סמן כבוצע'}
+      aria-label={done ? L('סמן כלא בוצע', 'Mark as not done') : L('סמן כבוצע', 'Mark as done')}
       aria-pressed={!!done}
       className={`pressable grid shrink-0 place-items-center rounded-full border-2 ${done ? 'border-done bg-done text-white' : 'border-faint/70 hover:border-done'}`}
       style={{ width: size, height: size }}
@@ -73,7 +74,7 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
           <h3 className={`min-w-0 flex-1 text-[16px] font-semibold leading-snug ${done ? 'text-muted line-through decoration-faint' : ''}`}>
             <Highlight text={item.title} terms={terms} />
           </h3>
-          {!item.reviewed && <span className="mt-0.5 shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">חדש</span>}
+          {!item.reviewed && <span className="mt-0.5 shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">{L('חדש', 'New')}</span>}
         </div>
 
         {terms.length > 0 && item.rawText !== item.title && (
@@ -97,7 +98,7 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
             </span>
           )}
           {item.reminderAt && !item.reminderFired && !done && (
-            <span className="inline-flex items-center gap-1 font-semibold text-brand" aria-label="יש תזכורת">
+            <span className="inline-flex items-center gap-1 font-semibold text-brand" aria-label={L('יש תזכורת', 'Has a reminder')}>
               <Bell size={13} fill="currentColor" />
               {formatReminder(item.reminderAt)}
             </span>
@@ -105,7 +106,7 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
           {total > 0 && (
             <span className="inline-flex items-center gap-1.5">
               <span className="relative h-1.5 w-12 overflow-hidden rounded-full bg-sunken">
-                <span className="absolute inset-y-0 right-0 rounded-full bg-done" style={{ width: `${(checked / total) * 100}%` }} />
+                <span className="absolute inset-y-0 start-0 rounded-full bg-done" style={{ width: `${(checked / total) * 100}%` }} />
               </span>
               <span className="tabular">
                 {checked}/{total}
@@ -118,7 +119,7 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
               <span className="truncate">{item.link.siteName}</span>
             </span>
           )}
-          {item.image && <ImageIcon size={13} aria-label="תמונה" />}
+          {item.image && <ImageIcon size={13} aria-label={L('תמונה', 'Image')} />}
           {!isTask && <span>{formatSaved(item.createdAt)}</span>}
           {item.tags.slice(0, 2).map((t) => (
             <span key={t} className="text-faint">
@@ -133,7 +134,7 @@ export function ItemCard({ item, terms = [], showCategory = true }: { item: Item
           e.stopPropagation();
           toggleFavorite(item.id);
         }}
-        aria-label={item.favorite ? 'הסר ממועדפים' : 'הוסף למועדפים'}
+        aria-label={item.favorite ? L('הסר ממועדפים', 'Remove from favorites') : L('הוסף למועדפים', 'Add to favorites')}
         aria-pressed={item.favorite}
         className={`pressable -m-1 grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-sunken ${item.favorite ? 'text-warn' : 'text-faint/70 opacity-100 lg:opacity-0 lg:group-hover:opacity-100'}`}
       >

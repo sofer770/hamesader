@@ -9,6 +9,7 @@ import { classifier } from '../services/classifier';
 import { ItemList, ItemCard } from '../components/ItemCard';
 import { Checklist } from '../components/Checklist';
 import { EmptyState, Footer, ScreenHeader, SectionTitle, Segmented, TagChip } from '../components/ui';
+import { L } from '../lib/i18n';
 
 const byNewest = (a: Item, b: Item) => +new Date(b.createdAt) - +new Date(a.createdAt);
 
@@ -17,7 +18,7 @@ export function CategoriesScreen() {
   const nav = useNav();
   return (
     <div>
-      <ScreenHeader title="קטגוריות" subtitle={`${items.length} פריטים שמורים, כל אחד במקום שלו`} />
+      <ScreenHeader title={L('קטגוריות', 'Categories')} subtitle={L(`${items.length} פריטים שמורים, כל אחד במקום שלו`, `${items.length} saved items, each in its place`)} />
       <ul className="flex flex-col gap-2.5">
         {CATEGORIES.map((c) => {
           const list = items.filter((i) => i.category === c.id).sort(byNewest);
@@ -45,7 +46,7 @@ export function CategoriesScreen() {
           );
         })}
       </ul>
-      <SectionTitle>תגיות</SectionTitle>
+      <SectionTitle>{L('תגיות', 'Tags')}</SectionTitle>
       <div className="flex flex-wrap gap-2">
         {allTags.map((t) => (
           <TagChip key={t} tag={`${t} · ${items.filter((i) => i.tags.includes(t)).length}`} onClick={() => nav.go({ name: 'tag', tag: t })} />
@@ -79,9 +80,9 @@ function GenericCategory({ id }: { id: CategoryId }) {
       <ScreenHeader
         emoji={c.emoji}
         title={c.name}
-        subtitle={`${all.length} פריטים · ${c.blurb}`}
+        subtitle={L(`${all.length} פריטים · ${c.blurb}`, `${all.length} ${all.length === 1 ? 'item' : 'items'} · ${c.blurb}`)}
         actions={
-          <button onClick={() => nav.openComposer(hint)} className="pressable grid h-10 w-10 place-items-center rounded-full" style={{ ...toneBg(id), ...toneInk(id) }} aria-label={`הוספה ל${c.name}`}>
+          <button onClick={() => nav.openComposer(hint)} className="pressable grid h-10 w-10 place-items-center rounded-full" style={{ ...toneBg(id), ...toneInk(id) }} aria-label={L(`הוספה ל${c.name}`, `Add to ${c.name}`)}>
             <Plus size={20} />
           </button>
         }
@@ -93,16 +94,16 @@ function GenericCategory({ id }: { id: CategoryId }) {
             value={sort}
             onChange={setSort}
             options={[
-              { value: 'new', label: 'החדשים קודם' },
-              { value: 'old', label: 'הישנים קודם' },
-              { value: 'fav', label: 'מועדפים קודם' },
+              { value: 'new', label: L('החדשים קודם', 'Newest first') },
+              { value: 'old', label: L('הישנים קודם', 'Oldest first') },
+              { value: 'fav', label: L('מועדפים קודם', 'Favorites first') },
             ]}
           />
         </div>
       </div>
       {tags.length > 0 && (
         <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
-          <TagChip tag="הכל" selected={!tag} onClick={() => setTag(null)} />
+          <TagChip tag={L('הכל', 'all')} selected={!tag} onClick={() => setTag(null)} />
           {tags.map((t) => (
             <TagChip key={t} tag={t} selected={tag === t} onClick={() => setTag(tag === t ? null : t)} />
           ))}
@@ -113,11 +114,11 @@ function GenericCategory({ id }: { id: CategoryId }) {
       ) : (
         <EmptyState
           emoji={c.emoji}
-          title={`עוד אין כאן ${c.name}`}
-          text="כל מה שתשמרו ושייך לכאן יגיע לבד."
+          title={L(`עוד אין כאן ${c.name}`, `No ${c.name.toLowerCase()} here yet`)}
+          text={L('כל מה שתשמרו ושייך לכאן יגיע לבד.', 'Anything you save that belongs here will arrive on its own.')}
           action={
             <button onClick={() => nav.openComposer(hint)} className="pressable h-11 rounded-xl bg-brand px-5 font-semibold text-brand-ink">
-              הוספה ראשונה
+              {L('הוספה ראשונה', 'Add the first one')}
             </button>
           }
         />
@@ -158,21 +159,21 @@ function TasksScreen() {
     const r = await classifier.classify({ text, hint: 'task' });
     const item = await store.addFromClassification(text, r, { category: 'tasks' });
     setDraft('');
-    store.showToast({ text: r.dueDate ? 'המשימה נוספה עם תאריך יעד' : 'המשימה נוספה', emoji: '✅', action: { label: 'לפריט', run: () => nav.go({ name: 'item', id: item.id }) } });
+    store.showToast({ text: r.dueDate ? L('המשימה נוספה עם תאריך יעד', 'Task added with a due date') : L('המשימה נוספה', 'Task added'), emoji: '✅', action: { label: L('לפריט', 'View'), run: () => nav.go({ name: 'item', id: item.id }) } });
   }
 
   const list = groups[filter];
   const empty: Record<TaskFilter, [string, string, string]> = {
-    today: ['☀️', 'היום פנוי', 'אין משימות להיום. אפשר להתקדם עם משהו מהשבוע.'],
-    week: ['🗓️', 'שבוע רגוע', 'אין משימות נוספות לשבוע הזה.'],
-    later: ['🔭', 'אין משימות עתידיות', 'משימות עם תאריך רחוק יותר יופיעו כאן.'],
-    all: ['🎉', 'אין משימות פתוחות', 'כל מה שהיה, בוצע. כל הכבוד!'],
-    done: ['📋', 'עוד לא הושלמו משימות', 'משימות שתסמנו כבוצעו יחכו כאן.'],
+    today: ['☀️', L('היום פנוי', 'Today is free'), L('אין משימות להיום. אפשר להתקדם עם משהו מהשבוע.', 'No tasks for today. You can get ahead on something from this week.')],
+    week: ['🗓️', L('שבוע רגוע', 'A calm week'), L('אין משימות נוספות לשבוע הזה.', 'No more tasks this week.')],
+    later: ['🔭', L('אין משימות עתידיות', 'No upcoming tasks'), L('משימות עם תאריך רחוק יותר יופיעו כאן.', 'Tasks with later dates will show up here.')],
+    all: ['🎉', L('אין משימות פתוחות', 'No open tasks'), L('כל מה שהיה, בוצע. כל הכבוד!', 'Everything is done. Well done!')],
+    done: ['📋', L('עוד לא הושלמו משימות', 'No completed tasks yet'), L('משימות שתסמנו כבוצעו יחכו כאן.', 'Tasks you mark as done will wait here.')],
   };
 
   return (
     <div>
-      <ScreenHeader emoji="✅" title="משימות" subtitle={`${open.length} פתוחות · ${groups.done.length} הושלמו`} />
+      <ScreenHeader emoji="✅" title={L('משימות', 'Tasks')} subtitle={L(`${open.length} פתוחות · ${groups.done.length} הושלמו`, `${open.length} open · ${groups.done.length} done`)} />
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -184,11 +185,11 @@ function TasksScreen() {
           id="quick-task"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder='משימה חדשה, למשל "להתקשר לאמא מחר ב-18:00"'
+          placeholder={L('משימה חדשה, למשל "להתקשר לאמא מחר ב-18:00"', 'New task, e.g. "Call mom tomorrow at 18:00"')}
           className="h-11 min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-faint"
         />
         <button type="submit" disabled={!draft.trim()} className="pressable h-11 shrink-0 rounded-xl bg-brand px-4 font-semibold text-brand-ink disabled:opacity-40">
-          הוספה
+          {L('הוספה', 'Add')}
         </button>
       </form>
       <div className="mb-4">
@@ -197,11 +198,11 @@ function TasksScreen() {
           value={filter}
           onChange={setFilter}
           options={[
-            { value: 'today', label: 'היום', count: groups.today.length },
-            { value: 'week', label: 'השבוע', count: groups.week.length },
-            { value: 'later', label: 'בהמשך', count: groups.later.length },
-            { value: 'all', label: 'פתוחות', count: groups.all.length },
-            { value: 'done', label: 'הושלמו', count: groups.done.length },
+            { value: 'today', label: L('היום', 'Today'), count: groups.today.length },
+            { value: 'week', label: L('השבוע', 'This week'), count: groups.week.length },
+            { value: 'later', label: L('בהמשך', 'Later'), count: groups.later.length },
+            { value: 'all', label: L('פתוחות', 'Open'), count: groups.all.length },
+            { value: 'done', label: L('הושלמו', 'Done'), count: groups.done.length },
           ]}
         />
       </div>
@@ -220,8 +221,8 @@ function ShoppingScreen() {
   const singles = all.filter((i) => !i.checklist);
 
   async function newList() {
-    const r = await classifier.classify({ text: 'רשימת קניות', hint: 'list' });
-    const item = await store.addFromClassification('רשימת קניות חדשה', { ...r, title: 'רשימת קניות חדשה', listItems: [], isShoppingList: true }, { category: 'shopping' });
+    const r = await classifier.classify({ text: L('רשימת קניות', 'Shopping list'), hint: 'list' });
+    const item = await store.addFromClassification(L('רשימת קניות חדשה', 'New shopping list'), { ...r, title: L('רשימת קניות חדשה', 'New shopping list'), listItems: [], isShoppingList: true }, { category: 'shopping' });
     store.update(item.id, { checklist: [] });
     nav.go({ name: 'item', id: item.id });
   }
@@ -230,11 +231,11 @@ function ShoppingScreen() {
     <div>
       <ScreenHeader
         emoji="🛒"
-        title="קניות"
-        subtitle={`${lists.length === 1 ? 'רשימה אחת' : `${lists.length} רשימות`} · ${singles.length === 1 ? 'דבר אחד לקנות' : `${singles.length} דברים לקנות`}`}
+        title={L('קניות', 'Shopping')}
+        subtitle={`${lists.length === 1 ? L('רשימה אחת', '1 list') : L(`${lists.length} רשימות`, `${lists.length} lists`)} · ${singles.length === 1 ? L('דבר אחד לקנות', '1 thing to buy') : L(`${singles.length} דברים לקנות`, `${singles.length} things to buy`)}`}
         actions={
           <button onClick={newList} className="pressable inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-semibold" style={{ ...toneBg('shopping'), ...toneInk('shopping') }}>
-            <Plus size={16} /> רשימה חדשה
+            <Plus size={16} /> {L('רשימה חדשה', 'New list')}
           </button>
         }
       />
@@ -251,7 +252,7 @@ function ShoppingScreen() {
           ))}
         </div>
       )}
-      <SectionTitle>דברים שרציתי לקנות</SectionTitle>
+      <SectionTitle>{L('דברים שרציתי לקנות', 'Things I wanted to buy')}</SectionTitle>
       {singles.length ? (
         <ul className="flex flex-col gap-2.5">
           {singles.map((i) => (
@@ -261,7 +262,7 @@ function ShoppingScreen() {
           ))}
         </ul>
       ) : (
-        <EmptyState emoji="🛍️" title="אין כאן כלום" text='כתבו "לקנות..." והמסדר יביא את זה לכאן.' />
+        <EmptyState emoji="🛍️" title={L('אין כאן כלום', 'Nothing here')} text={L('כתבו "לקנות..." והמסדר יביא את זה לכאן.', 'Write "buy..." and Hamesader will bring it here.')} />
       )}
       <Footer />
     </div>

@@ -6,12 +6,13 @@ import { useStore } from '../state/store';
 import { Logo } from './ui';
 import { Composer } from './Composer';
 import { Welcome } from './Welcome';
+import { APP_NAME, L } from '../lib/i18n';
 
 const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: 'בית', icon: Home },
-  { id: 'search', label: 'חיפוש', icon: Search },
-  { id: 'categories', label: 'קטגוריות', icon: LayoutGrid },
-  { id: 'profile', label: 'פרופיל', icon: UserRound },
+  { id: 'home', label: L('בית', 'Home'), icon: Home },
+  { id: 'search', label: L('חיפוש', 'Search'), icon: Search },
+  { id: 'categories', label: L('קטגוריות', 'Categories'), icon: LayoutGrid },
+  { id: 'profile', label: L('פרופיל', 'Profile'), icon: UserRound },
 ];
 
 function useReminders() {
@@ -78,7 +79,7 @@ function ReminderAlert({ id, onClose }: { id: string; onClose: () => void }) {
   if (!item) return null;
   const snooze = (min: number) => {
     update(item.id, { reminderAt: new Date(Date.now() + min * 60_000).toISOString(), reminderFired: false });
-    showToast({ text: `נזכיר שוב בעוד ${min} דקות`, emoji: '😴' });
+    showToast({ text: L(`נזכיר שוב בעוד ${min} דקות`, `We'll remind you again in ${min} minutes`), emoji: '😴' });
     onClose();
   };
   return (
@@ -87,7 +88,7 @@ function ReminderAlert({ id, onClose }: { id: string; onClose: () => void }) {
         <div className="mx-auto mb-2 grid h-16 w-16 animate-[wiggle_0.5s_ease-in-out_3] place-items-center rounded-full bg-brand-soft text-4xl" aria-hidden>
           ⏰
         </div>
-        <div className="text-[13px] font-semibold text-brand">תזכורת</div>
+        <div className="text-[13px] font-semibold text-brand">{L('תזכורת', 'Reminder')}</div>
         <h2 id="rem-title" className="mt-1 font-display text-[20px] font-bold leading-snug">
           {item.title}
         </h2>
@@ -96,24 +97,24 @@ function ReminderAlert({ id, onClose }: { id: string; onClose: () => void }) {
             <button
               onClick={() => {
                 toggleTask(item.id);
-                showToast({ text: 'כל הכבוד! המשימה סומנה כבוצעה', emoji: '✅' });
+                showToast({ text: L('כל הכבוד! המשימה סומנה כבוצעה', 'Well done! Task marked as done'), emoji: '✅' });
                 onClose();
               }}
               className="pressable h-12 rounded-2xl bg-[rgb(var(--done))] font-display text-[16px] font-semibold text-white"
             >
-              ✓ סיימתי
+              ✓ {L('סיימתי', 'Done')}
             </button>
           ) : (
             <button onClick={onClose} className="pressable h-12 rounded-2xl bg-brand font-display text-[16px] font-semibold text-brand-ink">
-              הבנתי
+              {L('הבנתי', 'Got it')}
             </button>
           )}
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => snooze(10)} className="pressable h-11 rounded-2xl bg-sunken text-[15px] font-semibold">
-              😴 עוד 10 דקות
+              😴 {L('עוד 10 דקות', '10 more minutes')}
             </button>
             <button onClick={() => snooze(60)} className="pressable h-11 rounded-2xl bg-sunken text-[15px] font-semibold">
-              😴 עוד שעה
+              😴 {L('עוד שעה', '1 more hour')}
             </button>
           </div>
           <button
@@ -123,7 +124,7 @@ function ReminderAlert({ id, onClose }: { id: string; onClose: () => void }) {
             }}
             className="mt-1 text-[14px] font-semibold text-brand hover:underline"
           >
-            פתיחת הפריט
+            {L('פתיחת הפריט', 'Open item')}
           </button>
         </div>
       </div>
@@ -198,14 +199,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button onClick={() => nav.switchTab('home')} className="mb-8 flex items-center gap-3 px-2">
           <Logo size={44} />
           <div className="text-start">
-            <div className="font-display text-xl font-bold leading-none">המסדר</div>
-            <div className="mt-1 text-[13px] text-muted">כל מה ששמרת, במקום אחד</div>
+            <div className="font-display text-xl font-bold leading-none">{APP_NAME}</div>
+            <div className="mt-1 text-[13px] text-muted">{L('כל מה ששמרת, במקום אחד', 'Everything you saved, in one place')}</div>
           </div>
         </button>
         <button onClick={() => nav.openComposer()} className="pressable mb-6 flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand font-display font-semibold text-brand-ink shadow-fab">
-          <Plus size={20} strokeWidth={2.5} /> הוסף משהו חדש
+          <Plus size={20} strokeWidth={2.5} /> {L('הוסף משהו חדש', 'Add something new')}
         </button>
-        <nav className="flex flex-col gap-1" aria-label="ניווט ראשי">
+        <nav className="flex flex-col gap-1" aria-label={L('ניווט ראשי', 'Main navigation')}>
           {TABS.map((t) => {
             const active = nav.tab === t.id;
             return (
@@ -225,7 +226,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="pressable flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold text-muted hover:bg-sunken hover:text-ink"
           >
             <span className="w-5 text-center" aria-hidden>📥</span>
-            תיבת קליטה
+            {L('תיבת קליטה', 'Inbox')}
             {inboxCount > 0 && <span className="tabular ms-auto rounded-full bg-brand px-2 text-[12px] text-brand-ink">{inboxCount}</span>}
           </button>
         </nav>
@@ -237,7 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom navigation with the add button in the middle */}
       <nav
-        aria-label="ניווט ראשי"
+        aria-label={L('ניווט ראשי', 'Main navigation')}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
       >
         <div className="mx-auto grid h-[68px] max-w-lg grid-cols-5 items-center px-2">
@@ -247,7 +248,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex justify-center">
             <button
               onClick={() => nav.openComposer()}
-              aria-label="הוסף משהו חדש"
+              aria-label={L('הוסף משהו חדש', 'Add something new')}
               className="pressable -mt-7 grid h-16 w-16 place-items-center rounded-[22px] bg-brand text-brand-ink shadow-fab ring-4 ring-bg"
             >
               <Plus size={30} strokeWidth={2.5} />

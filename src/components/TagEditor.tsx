@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useStore } from '../state/store';
 import { TagChip } from './ui';
+import { L } from '../lib/i18n';
 
 export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (t: string[]) => void }) {
   const { allTags, settings, updateSettings } = useStore();
@@ -33,18 +34,18 @@ export function TagEditor({ tags, onChange }: { tags: string[]; onChange: (t: st
             id="tag-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="תגית חדשה"
+            placeholder={L('תגית חדשה', 'New tag')}
             className="w-24 bg-transparent text-[13px] outline-none placeholder:text-faint"
-            aria-label="הוספת תגית"
+            aria-label={L('הוספת תגית', 'Add a tag')}
           />
-          <button type="submit" className="grid h-7 w-7 place-items-center text-muted" aria-label="הוסף תגית">
+          <button type="submit" className="grid h-7 w-7 place-items-center text-muted" aria-label={L('הוסף תגית', 'Add tag')}>
             <Plus size={14} />
           </button>
         </form>
       </div>
       {suggestions.length > 0 && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          <span className="text-[12px] text-faint">הצעות:</span>
+          <span className="text-[12px] text-faint">{L('הצעות:', 'Suggestions:')}</span>
           {suggestions.map((t) => (
             <button key={t} onClick={() => add(t)} className="rounded-full bg-sunken px-2.5 py-1 text-[12px] font-semibold text-muted hover:text-ink">
               + {t}

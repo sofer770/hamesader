@@ -6,6 +6,7 @@ import { searchItems, EXAMPLE_QUERIES } from '../services/search';
 import { CATEGORIES, CATEGORY_BY_ID, toneBg, toneInk } from '../lib/categories';
 import { ItemList } from '../components/ItemCard';
 import { EmptyState, Footer, SectionTitle, TagChip } from '../components/ui';
+import { L } from '../lib/i18n';
 
 export function SearchScreen({ initial = '' }: { initial?: string }) {
   const { items, allTags, settings, updateSettings } = useStore();
@@ -39,7 +40,7 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
   return (
     <div>
       <div className="sticky top-0 z-20 -mx-4 bg-bg/90 px-4 pb-3 pt-[max(16px,env(safe-area-inset-top))] backdrop-blur-md lg:-mx-8 lg:px-8">
-        <h1 className="mb-3 font-display text-[22px] font-semibold">חיפוש</h1>
+        <h1 className="mb-3 font-display text-[22px] font-semibold">{L('חיפוש', 'Search')}</h1>
         <div className="flex h-14 items-center gap-3 rounded-2xl border-2 border-brand/50 bg-surface px-4 shadow-soft focus-within:border-brand">
           <SearchIcon size={20} className="shrink-0 text-brand" />
           <input
@@ -49,12 +50,12 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
             onChange={(e) => setQ(e.target.value)}
             enterKeyHint="search"
             type="search"
-            placeholder="מה מחפשים? אפשר לשאול במילים שלך"
+            placeholder={L('מה מחפשים? אפשר לשאול במילים שלך', 'What are you looking for? Ask in your own words')}
             className="min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-faint [&::-webkit-search-cancel-button]:hidden"
-            aria-label="חיפוש"
+            aria-label={L('חיפוש', 'Search')}
           />
           {q && (
-            <button onClick={() => (setQ(''), inputRef.current?.focus())} className="grid h-8 w-8 place-items-center rounded-full bg-sunken" aria-label="ניקוי החיפוש">
+            <button onClick={() => (setQ(''), inputRef.current?.focus())} className="grid h-8 w-8 place-items-center rounded-full bg-sunken" aria-label={L('ניקוי החיפוש', 'Clear search')}>
               <X size={16} />
             </button>
           )}
@@ -62,18 +63,18 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
         {understood && (
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[13px] text-muted animate-fade-in">
             <Sparkles size={14} className="text-brand" />
-            <span>הבנו שמחפשים:</span>
+            <span>{L('הבנו שמחפשים:', 'Looking for:')}</span>
             {intent.category && (
               <span className="rounded-full px-2 py-0.5 font-semibold" style={{ ...toneBg(intent.category), ...toneInk(intent.category) }}>
                 {CATEGORY_BY_ID[intent.category].emoji} {CATEGORY_BY_ID[intent.category].name}
               </span>
             )}
             {intent.taskStatus && (
-              <span className="rounded-full bg-sunken px-2 py-0.5 font-semibold text-ink">{intent.taskStatus === 'open' ? 'שעוד לא בוצעו' : 'שכבר בוצעו'}</span>
+              <span className="rounded-full bg-sunken px-2 py-0.5 font-semibold text-ink">{intent.taskStatus === 'open' ? L('שעוד לא בוצעו', 'not done yet') : L('שכבר בוצעו', 'already done')}</span>
             )}
-            {intent.favorites && <span className="rounded-full bg-warn-soft px-2 py-0.5 font-semibold text-warn">⭐ מועדפים</span>}
+            {intent.favorites && <span className="rounded-full bg-warn-soft px-2 py-0.5 font-semibold text-warn">{L('⭐ מועדפים', '⭐ Favorites')}</span>}
             {intent.tag && <span className="rounded-full bg-sunken px-2 py-0.5 font-semibold text-ink">#{intent.tag}</span>}
-            {intent.recentDays && <span className="rounded-full bg-sunken px-2 py-0.5 font-semibold text-ink">{intent.recentDays === 1 ? 'מהיום' : intent.recentDays === 7 ? 'מהשבוע האחרון' : 'מהחודש האחרון'}</span>}
+            {intent.recentDays && <span className="rounded-full bg-sunken px-2 py-0.5 font-semibold text-ink">{intent.recentDays === 1 ? L('מהיום', 'from today') : intent.recentDays === 7 ? L('מהשבוע האחרון', 'from the last week') : L('מהחודש האחרון', 'from the last month')}</span>}
             {intent.terms.length > 0 && <span className="font-semibold text-ink">"{intent.terms.join(' ')}"</span>}
           </div>
         )}
@@ -82,18 +83,18 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
       {active ? (
         <div className="mt-2">
           <p className="tabular mb-3 text-[14px] text-muted" aria-live="polite">
-            {hits.length ? (hits.length === 1 ? 'נמצא פריט אחד' : `נמצאו ${hits.length} פריטים`) : ''}
+            {hits.length ? (hits.length === 1 ? L('נמצא פריט אחד', '1 item found') : L(`נמצאו ${hits.length} פריטים`, `${hits.length} items found`)) : ''}
           </p>
           {hits.length ? (
             <ItemList items={hits.map((h) => h.item)} terms={[...new Set(hits.flatMap((h) => h.terms))]} animate={false} />
           ) : (
             <EmptyState
               emoji="🔍"
-              title="לא מצאנו את זה"
-              text="נסו מילה אחרת, שם של אתר או קטגוריה. ואם זה עוד לא נשמר, אפשר לשמור עכשיו."
+              title={L('לא מצאנו את זה', "We couldn't find that")}
+              text={L('נסו מילה אחרת, שם של אתר או קטגוריה. ואם זה עוד לא נשמר, אפשר לשמור עכשיו.', "Try another word, a site name or a category. And if it isn't saved yet, you can save it now.")}
               action={
                 <button onClick={() => nav.openComposer(undefined, q)} className="pressable h-11 rounded-xl bg-brand px-5 font-semibold text-brand-ink">
-                  לשמור את "{q.length > 18 ? q.slice(0, 18) + '…' : q}"
+                  {L('לשמור את', 'Save')} "{q.length > 18 ? q.slice(0, 18) + '…' : q}"
                 </button>
               }
             />
@@ -103,8 +104,8 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
         <div>
           {settings.recentSearches.length > 0 && (
             <>
-              <SectionTitle action={<button onClick={() => updateSettings({ recentSearches: [] })} className="text-sm font-semibold text-muted hover:text-ink">ניקוי</button>}>
-                חיפושים אחרונים
+              <SectionTitle action={<button onClick={() => updateSettings({ recentSearches: [] })} className="text-sm font-semibold text-muted hover:text-ink">{L('ניקוי', 'Clear')}</button>}>
+                {L('חיפושים אחרונים', 'Recent searches')}
               </SectionTitle>
               <ul className="flex flex-col">
                 {settings.recentSearches.map((s) => (
@@ -119,7 +120,7 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
             </>
           )}
 
-          <SectionTitle>אפשר לשאול כמו שמדברים</SectionTitle>
+          <SectionTitle>{L('אפשר לשאול כמו שמדברים', 'Ask the way you talk')}</SectionTitle>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_QUERIES.map((ex) => (
               <button key={ex} onClick={() => setQ(ex)} className="pressable rounded-2xl border border-line bg-surface px-3.5 py-2 text-[15px] shadow-soft hover:border-brand/40">
@@ -128,7 +129,7 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
             ))}
           </div>
 
-          <SectionTitle>לפי קטגוריה</SectionTitle>
+          <SectionTitle>{L('לפי קטגוריה', 'By category')}</SectionTitle>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <button
@@ -143,7 +144,7 @@ export function SearchScreen({ initial = '' }: { initial?: string }) {
             ))}
           </div>
 
-          <SectionTitle>לפי תגית</SectionTitle>
+          <SectionTitle>{L('לפי תגית', 'By tag')}</SectionTitle>
           <div className="flex flex-wrap gap-2">
             {allTags.map((t) => (
               <TagChip key={t} tag={t} onClick={() => nav.go({ name: 'tag', tag: t })} />

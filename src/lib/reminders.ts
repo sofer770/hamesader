@@ -1,4 +1,5 @@
 import type { Item } from './types';
+import { isEn, L } from './i18n';
 
 /**
  * Reminders: the sound + vibration + notification side.
@@ -9,10 +10,10 @@ import type { Item } from './types';
 export type ReminderSound = 'bell' | 'beep' | 'chime' | 'none';
 
 export const REMINDER_SOUNDS: { value: ReminderSound; label: string; emoji: string }[] = [
-  { value: 'bell', label: 'פעמון', emoji: '🔔' },
-  { value: 'beep', label: 'צפצוף', emoji: '📟' },
-  { value: 'chime', label: 'עדין', emoji: '🎐' },
-  { value: 'none', label: 'שקט', emoji: '🔕' },
+  { value: 'bell', label: L('פעמון', 'Bell'), emoji: '🔔' },
+  { value: 'beep', label: L('צפצוף', 'Beep'), emoji: '📟' },
+  { value: 'chime', label: L('עדין', 'Gentle'), emoji: '🎐' },
+  { value: 'none', label: L('שקט', 'Silent'), emoji: '🔕' },
 ];
 
 export const isNative = () => !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
@@ -113,8 +114,8 @@ export async function showWebNotification(title: string) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const opts = { body: title, icon: import.meta.env.BASE_URL + 'icons/icon-192.png', tag: 'hamesader-reminder', renotify: true, vibrate: [300, 150, 300] } as NotificationOptions;
     const reg = await navigator.serviceWorker?.getRegistration();
-    if (reg) await reg.showNotification('⏰ תזכורת מהמסדר', opts);
-    else new Notification('⏰ תזכורת מהמסדר', opts);
+    if (reg) await reg.showNotification(L('⏰ תזכורת מהמסדר', '⏰ Reminder from Hamesader'), opts);
+    else new Notification(L('⏰ תזכורת מהמסדר', '⏰ Reminder from Hamesader'), opts);
   } catch {
     /* ignore */
   }
@@ -136,8 +137,8 @@ export async function syncNativeReminders(items: Item[]) {
     if (!channelReady) {
       await LocalNotifications.createChannel({
         id: 'reminders',
-        name: 'תזכורות',
-        description: 'תזכורות שהגדרת במסדר',
+        name: L('תזכורות', 'Reminders'),
+        description: L('תזכורות שהגדרת במסדר', 'Reminders you set in Hamesader'),
         importance: 5,
         visibility: 1,
         sound: 'reminder.wav',
@@ -153,7 +154,7 @@ export async function syncNativeReminders(items: Item[]) {
     await LocalNotifications.schedule({
       notifications: upcoming.map((i) => ({
         id: numericId(i.id),
-        title: '⏰ תזכורת מהמסדר',
+        title: L('⏰ תזכורת מהמסדר', '⏰ Reminder from Hamesader'),
         body: i.title,
         channelId: 'reminders',
         sound: 'reminder.wav',
@@ -199,19 +200,26 @@ const atTime = (base: Date, h: number, m = 0, addDays = 0) => {
 };
 
 export const REMINDER_PRESETS: ReminderPreset[] = [
-  { id: '10m', label: 'בעוד 10 דקות', at: (n) => new Date(n.getTime() + 10 * 60_000) },
-  { id: '1h', label: 'בעוד שעה', at: (n) => new Date(n.getTime() + 60 * 60_000) },
-  { id: '3h', label: 'בעוד 3 שעות', at: (n) => new Date(n.getTime() + 180 * 60_000) },
-  { id: 'eve', label: 'הערב ב-20:00', at: (n) => (n.getHours() >= 20 ? atTime(n, 20, 0, 1) : atTime(n, 20)) },
-  { id: 'tmr', label: 'מחר ב-08:00', at: (n) => atTime(n, 8, 0, 1) },
-  { id: 'wk', label: 'בעוד שבוע', at: (n) => atTime(n, 9, 0, 7) },
+  { id: '10m', label: L('בעוד 10 דקות', 'In 10 minutes'), at: (n) => new Date(n.getTime() + 10 * 60_000) },
+  { id: '1h', label: L('בעוד שעה', 'In 1 hour'), at: (n) => new Date(n.getTime() + 60 * 60_000) },
+  { id: '3h', label: L('בעוד 3 שעות', 'In 3 hours'), at: (n) => new Date(n.getTime() + 180 * 60_000) },
+  { id: 'eve', label: L('הערב ב-20:00', 'This evening at 20:00'), at: (n) => (n.getHours() >= 20 ? atTime(n, 20, 0, 1) : atTime(n, 20)) },
+  { id: 'tmr', label: L('מחר ב-08:00', 'Tomorrow at 08:00'), at: (n) => atTime(n, 8, 0, 1) },
+  { id: 'wk', label: L('בעוד שבוע', 'In a week'), at: (n) => atTime(n, 9, 0, 7) },
 ];
 
 export function formatReminder(iso: string, now = new Date()) {
   const d = new Date(iso);
-  const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const day0 = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((day0(d) - day0(now)) / 86_400_000);
+  if (isEn) {
+    if (diff === 0) return `today at ${time}`;
+    if (diff === 1) return `tomorrow at ${time}`;
+    if (diff === -1) return `yesterday at ${time}`;
+    if (diff > 1 && diff < 7) return `${d.toLocaleDateString('en-US', { weekday: 'long' })} at ${time}`;
+    return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${time}`;
+  }
   if (diff === 0) return `היום ב-${time}`;
   if (diff === 1) return `מחר ב-${time}`;
   if (diff === -1) return `אתמול ב-${time}`;
