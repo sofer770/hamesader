@@ -31,10 +31,26 @@ function useInstallAction() {
   return { run, sheet, closeSheet: () => setSheet(false) };
 }
 
+const readDismissed = () => {
+  try {
+    return localStorage.getItem(KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const DISMISS_EVENT = 'hamesader-install-dismissed';
+
+/** Small header button. Shown only after the big card was closed, so there is always exactly one install button. */
 export function InstallButton() {
   const { visible } = useInstallState();
   const { run, sheet, closeSheet } = useInstallAction();
-  if (!visible) return null;
+  const [dismissed, setDismissed] = useState(readDismissed);
+  useEffect(() => {
+    const on = () => setDismissed(true);
+    window.addEventListener(DISMISS_EVENT, on);
+    return () => window.removeEventListener(DISMISS_EVENT, on);
+  }, []);
+  if (!visible || !dismissed) return null;
   return (
     <>
       <button
@@ -51,13 +67,7 @@ export function InstallButton() {
 export function InstallCard({ dismissible = false }: { dismissible?: boolean }) {
   const { visible } = useInstallState();
   const { run, sheet, closeSheet } = useInstallAction();
-  const [hidden, setHidden] = useState(() => {
-    try {
-      return dismissible && localStorage.getItem(KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
+  const [hidden, setHidden] = useState(() => dismissible && readDismissed());
   if (hidden || !visible) return null;
 
   return (
@@ -79,6 +89,7 @@ export function InstallCard({ dismissible = false }: { dismissible?: boolean }) 
             } catch {
               /* ignore */
             }
+            window.dispatchEvent(new Event(DISMISS_EVENT));
           }}
           className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full text-faint hover:bg-surface"
           aria-label="סגירה"
