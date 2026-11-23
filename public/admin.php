@@ -34,6 +34,13 @@ $days = [];
 for ($k = $range - 1; $k >= 0; $k--) {
   $days[date('Y-m-d', strtotime("-$k day"))] = ['visit' => [], 'install' => [], 'open' => [], 'install_android' => [], 'install_pwa' => []];
 }
+// Fixed periods: today, this week (from Sunday), this calendar month
+$todayStr = date('Y-m-d');
+$weekStart = date('Y-m-d', strtotime('-' . (int)date('w') . ' day'));
+$monthStart = date('Y-m-01');
+$periods = ['today' => $todayStr, 'week' => $weekStart, 'month' => $monthStart];
+$per = [];
+foreach ($periods as $k => $_) $per[$k] = ['visit' => [], 'install' => []];
 $allVisitors = []; $rangeVisitors = []; $installsAll = ['android' => [], 'pwa' => []]; $rangeInstalls = ['android' => [], 'pwa' => []];
 if ($authed) {
   foreach (glob($dataDir . '/events-*.csv') ?: [] as $f) {
@@ -45,6 +52,9 @@ if ($authed) {
       [$date, $e, $m, $id] = $p;
       if ($e === 'visit') $allVisitors[$id] = 1;
       if ($e === 'install' && isset($installsAll[$m])) $installsAll[$m][$id] = 1;
+      if ($e === 'visit' || $e === 'install') {
+        foreach ($periods as $k => $from) if ($date >= $from && $date <= $todayStr) $per[$k][$e][$id] = 1;
+      }
       if (!isset($days[$date])) continue;
       $days[$date][$e][$id] = 1;
       if ($e === 'visit') $rangeVisitors[$id] = 1;
@@ -106,6 +116,7 @@ $heDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'ש
   .err { color:#C0392B; font-weight:600; }
   .note { color:var(--muted); font-size:14px; line-height:1.6; }
   .scroll { overflow-x:auto; }
+  table.sum td { font-size:17px; } table.sum b { font-family:Rubik, sans-serif; font-size:24px; color:var(--brand); } table.sum td.g b { color:var(--done); }
 </style>
 </head>
 <body>
@@ -127,13 +138,21 @@ $heDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'ש
     <a href="?logout=1">יציאה</a>
   </header>
 
+  <div class="card scroll">
+    <table class="sum">
+      <thead><tr><th></th><th>התקינו</th><th>נכנסו</th></tr></thead>
+      <tbody>
+      <?php foreach (['today' => 'היום', 'week' => 'השבוע (מיום ראשון)', 'month' => 'החודש (' . date('m/Y') . ')'] as $k => $l): ?>
+        <tr><td><?= h($l) ?></td><td class="g"><b><?= count($per[$k]['install']) ?></b></td><td><b><?= count($per[$k]['visit']) ?></b></td></tr>
+      <?php endforeach; ?>
+        <tr><td>מאז ההתחלה</td><td class="g"><b><?= count($installsAll['android']) + count($installsAll['pwa']) ?></b> <span class="note">(<?= count($installsAll['android']) ?> אנדרואיד, <?= count($installsAll['pwa']) ?> מהאתר)</span></td><td><b><?= count($allVisitors) ?></b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="stats">
-    <div class="stat"><b><?= $today['visits'] ?></b><span>נכנסו היום</span></div>
-    <div class="stat g"><b><?= $today['installs'] ?></b><span>התקינו היום</span></div>
-    <div class="stat"><b><?= count($rangeVisitors) ?></b><span>נכנסו ב-<?= $range ?> ימים</span></div>
-    <div class="stat g"><b><?= count($rangeInstalls['android']) + count($rangeInstalls['pwa']) ?></b><span>התקינו ב-<?= $range ?> ימים</span></div>
-    <div class="stat"><b><?= count($allVisitors) ?></b><span>נכנסו מאז ההתחלה</span></div>
-    <div class="stat g"><b><?= count($installsAll['android']) + count($installsAll['pwa']) ?></b><span>התקינו מאז ההתחלה (<?= count($installsAll['android']) ?> אנדרואיד, <?= count($installsAll['pwa']) ?> מהאתר)</span></div>
+    <div class="stat"><b><?= count($rangeVisitors) ?></b><span>נכנסו ב-<?= $range ?> הימים האחרונים</span></div>
+    <div class="stat g"><b><?= count($rangeInstalls['android']) + count($rangeInstalls['pwa']) ?></b><span>התקינו ב-<?= $range ?> הימים האחרונים</span></div>
   </div>
 
   <nav class="tabs">
